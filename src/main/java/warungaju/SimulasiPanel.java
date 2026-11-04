@@ -1,6 +1,73 @@
 package warungaju;
-import java.awt.*; import javax.swing.*;
+
+import java.awt.*;
+import javax.swing.*;
+
 public class SimulasiPanel extends JPanel {
-    final SimulasiBisnis service=new SimulasiBisnis(); final JLabel result=new JLabel("<html><h2>Belum ada simulasi</h2>Pilih variabel lalu tekan Simulasikan.</html>");
-    public SimulasiPanel(MainFrame f){setLayout(new BorderLayout(15,15));setBackground(MainFrame.LIGHT);setBorder(BorderFactory.createEmptyBorder(25,30,30,30));add(new JLabel("<html><h1>Simulasi Bisnis</h1><font color='#60736b'>Uji perubahan strategi sebelum diterapkan di usaha</font></html>"),BorderLayout.NORTH);JPanel form=UI.formGrid();GridBagConstraints g=new GridBagConstraints();g.insets=new Insets(8,8,8,8);JTextField bahan=new JTextField("9000"),karyawan=new JTextField("2"),gaji=new JTextField("2500000"),jam=new JTextField("10"),target=new JTextField("100"),harga=new JTextField("18000");UI.field(form,g,"Harga bahan baku / unit",bahan,0);UI.field(form,g,"Jumlah karyawan",karyawan,1);UI.field(form,g,"Gaji / karyawan",gaji,2);UI.field(form,g,"Jam operasional / hari",jam,3);UI.field(form,g,"Target penjualan / bulan",target,4);UI.field(form,g,"Harga jual / unit",harga,5);JButton run=UI.button("Simulasikan");UI.field(form,g,"",run,6);JPanel box=new JPanel(new BorderLayout(10,10));box.setBackground(Color.WHITE);box.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));box.add(new JLabel("<html><h2>Input variabel</h2><p>Data contoh aktif. Ganti nilai untuk mencoba skenario.</p></html>"),BorderLayout.NORTH);box.add(form,BorderLayout.CENTER);JPanel output=new JPanel(new BorderLayout());output.setBackground(Color.WHITE);output.setBorder(BorderFactory.createEmptyBorder(25,25,25,25));output.add(new JLabel("<html><h2>Hasil simulasi</h2></html>"),BorderLayout.NORTH);output.add(result,BorderLayout.CENTER);JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,box,output);split.setResizeWeight(.5);add(split,BorderLayout.CENTER);run.addActionListener(e->{try{SimulasiBisnis.Result r=service.hitung(Double.parseDouble(bahan.getText()),Integer.parseInt(karyawan.getText()),Double.parseDouble(gaji.getText()),Double.parseDouble(jam.getText()),Double.parseDouble(target.getText()),Double.parseDouble(harga.getText()));result.setText("<html><h2>"+UI.money(r.laba)+"</h2><p>Pendapatan: "+UI.money(r.pendapatan)+"<br>HPP: "+UI.money(r.hpp)+"<br>Operasional: "+UI.money(r.operasional)+"<br>Margin: "+String.format("%.1f%%",r.margin)+"</p></html>");}catch(NumberFormatException ex){JOptionPane.showMessageDialog(this,"Semua variabel harus berupa angka.","Validasi",JOptionPane.WARNING_MESSAGE);}});}
+    final SimulasiBisnis service = new SimulasiBisnis();
+    final JLabel result = UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Belum ada simulasi</h2><p style='color:#C8D0FF'>Pilih variabel lalu tekan Simulasikan.</p></html>");
+
+    public SimulasiPanel(MainFrame f) {
+        setLayout(new BorderLayout(15, 15));
+        setBackground(UI.BG_DARK);
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        
+        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Simulasi Bisnis</h1><font color='#C8D0FF'>Uji perubahan strategi sebelum diterapkan di usaha</font></html>"), BorderLayout.NORTH);
+        
+        JPanel form = UI.formGrid();
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(10, 10, 10, 10);
+        
+        JTextField bahan = UI.input("9000");
+        JTextField karyawan = UI.input("2");
+        JTextField gaji = UI.input("2500000");
+        JTextField jam = UI.input("10");
+        JTextField target = UI.input("100");
+        JTextField harga = UI.input("18000");
+        
+        UI.field(form, g, "Harga bahan baku / unit", bahan, 0);
+        UI.field(form, g, "Jumlah karyawan", karyawan, 1);
+        UI.field(form, g, "Gaji / karyawan", gaji, 2);
+        UI.field(form, g, "Jam operasional / hari", jam, 3);
+        UI.field(form, g, "Target penjualan / bulan", target, 4);
+        UI.field(form, g, "Harga jual / unit", harga, 5);
+        
+        JButton run = UI.button("Simulasikan");
+        UI.field(form, g, "", run, 6);
+        
+        JPanel box = UI.glassPanel();
+        box.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        box.add(UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Input variabel</h2><p style='color:#C8D0FF'>Data contoh aktif. Ganti nilai untuk mencoba skenario.</p></html>"), BorderLayout.NORTH);
+        box.add(form, BorderLayout.CENTER);
+        
+        JPanel output = UI.glassPanel();
+        output.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        output.add(UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Hasil simulasi</h2></html>"), BorderLayout.NORTH);
+        output.add(result, BorderLayout.CENTER);
+        
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, box, output);
+        split.setResizeWeight(0.5);
+        split.setDividerLocation(0.5);
+        split.setDividerSize(8);
+        split.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
+        add(split, BorderLayout.CENTER);
+        
+        run.addActionListener(e -> {
+            try {
+                SimulasiBisnis.Result r = service.hitung(
+                    Double.parseDouble(bahan.getText()),
+                    Integer.parseInt(karyawan.getText()),
+                    Double.parseDouble(gaji.getText()),
+                    Double.parseDouble(jam.getText()),
+                    Double.parseDouble(target.getText()),
+                    Double.parseDouble(harga.getText())
+                );
+                result.setText(UI.html("<html><h2 style='color:#DFFF00'>" + UI.money(r.laba) + "</h2><p style='color:#FFFFF0'>Pendapatan: " + UI.money(r.pendapatan) + "<br>HPP: " + UI.money(r.hpp) + "<br>Operasional: " + UI.money(r.operasional) + "<br>Margin: " + String.format("%.1f%%", r.margin) + "</p></html>"));
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Semua variabel harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+    }
 }

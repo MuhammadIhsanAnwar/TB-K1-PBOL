@@ -1,12 +1,140 @@
 package warungaju;
-import java.awt.*; import java.time.LocalDate; import javax.swing.*; import javax.swing.table.DefaultTableModel; import javax.swing.table.TableRowSorter; import java.io.File;
+
+import java.awt.*;
+import java.io.File;
+import java.time.LocalDate;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 public class TransaksiPanel extends JPanel {
-    final MainFrame f; final DefaultTableModel model=new DefaultTableModel(new String[]{"Tanggal","Jenis","Kategori","Nominal","Keterangan"},0);
-    public TransaksiPanel(MainFrame f){this.f=f;setLayout(new BorderLayout(16,16));setBackground(MainFrame.LIGHT);setBorder(BorderFactory.createEmptyBorder(25,30,30,30));JPanel top=new JPanel(new BorderLayout(12,12));top.setOpaque(false);top.add(new JLabel("<html><h1>Transaksi</h1><font color='#60736b'>Catat dan kelola arus uang usaha</font></html>"),BorderLayout.NORTH);JPanel actions=new JPanel(new FlowLayout(FlowLayout.LEFT,8,0));actions.setOpaque(false);JButton add=UI.button("Tambah Transaksi"),template=UI.secondaryButton("Unduh Template Excel"),imp=UI.secondaryButton("Impor Excel");actions.add(add);actions.add(template);actions.add(imp);JTextField search=UI.input("");actions.add(UI.searchBar(search,"Cari keterangan atau kategori"));top.add(actions,BorderLayout.CENTER);add(top,BorderLayout.NORTH);
-        for(Transaksi t:f.transaksi)row(t); JTable table=new JTable(model);UI.styleTable(table);TableRowSorter<DefaultTableModel> sorter=new TableRowSorter<DefaultTableModel>(model);table.setRowSorter(sorter);search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener(){public void insertUpdate(javax.swing.event.DocumentEvent e){filter();}public void removeUpdate(javax.swing.event.DocumentEvent e){filter();}public void changedUpdate(javax.swing.event.DocumentEvent e){filter();}void filter(){sorter.setRowFilter(search.getText().trim().isEmpty()?null:RowFilter.regexFilter("(?i)"+java.util.regex.Pattern.quote(search.getText()),1,2,4));}});add(new JScrollPane(table),BorderLayout.CENTER);add.addActionListener(e->dialog());template.addActionListener(e->download());imp.addActionListener(e->importExcel());}
-    private void row(Transaksi t){model.addRow(new Object[]{t.getTanggal(),t.getJenis(),t.getKategori(),UI.money(t.getNominal()),t.getKeterangan()});}
-    private void dialog(){JTextField nominal=new JTextField(),ket=new JTextField();JComboBox<String> jenis=new JComboBox<String>(new String[]{"Pemasukan","Pengeluaran"}),kat=new JComboBox<String>(new String[]{"Penjualan","Bahan baku","Operasional","Lainnya"});JPanel p=UI.formGrid();GridBagConstraints g=new GridBagConstraints();g.insets=new Insets(6,6,6,6);g.anchor=GridBagConstraints.WEST;UI.field(p,g,"Jenis",jenis,0);UI.field(p,g,"Kategori",kat,1);UI.field(p,g,"Nominal",nominal,2);UI.field(p,g,"Keterangan",ket,3);int ok=JOptionPane.showConfirmDialog(this,p,"Tambah transaksi",JOptionPane.OK_CANCEL_OPTION);if(ok==JOptionPane.OK_OPTION)try{Transaksi t=new Transaksi(LocalDate.now(),(String)jenis.getSelectedItem(),(String)kat.getSelectedItem(),Double.parseDouble(nominal.getText()),ket.getText());f.transaksi.add(t);row(t);JOptionPane.showMessageDialog(this,"Transaksi berhasil disimpan.");}catch(NumberFormatException ex){JOptionPane.showMessageDialog(this,"Nominal harus berupa angka.","Validasi",JOptionPane.WARNING_MESSAGE);}}
-    private void download(){JFileChooser c=new JFileChooser();if(c.showSaveDialog(this)==JFileChooser.APPROVE_OPTION)try{new ExcelService().buatTemplate(new File(c.getSelectedFile().getAbsolutePath()+".xlsx"));JOptionPane.showMessageDialog(this,"Template berhasil dibuat.");}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage(),"Gagal",JOptionPane.ERROR_MESSAGE);}}
-    private void importExcel(){JFileChooser c=new JFileChooser();if(c.showOpenDialog(this)==JFileChooser.APPROVE_OPTION)try{String path=c.getSelectedFile().getCanonicalPath();if(f.importedFiles.contains(path)){JOptionPane.showMessageDialog(this,"File ini sudah pernah diimpor.","Duplikasi",JOptionPane.WARNING_MESSAGE);return;}java.util.Set<String> names=new java.util.HashSet<String>();for(Produk p:f.produk)names.add(p.getNama());java.util.List<Transaksi> imported=new ExcelService().impor(c.getSelectedFile(),names);DefaultTableModel preview=new DefaultTableModel(new String[]{"Tanggal","Produk","Penjualan","HPP","Keterangan"},0);for(Transaksi t:imported)preview.addRow(new Object[]{t.getTanggal(),t.getProduk(),UI.money(t.getNominal()),UI.money(t.getHpp()),t.getKeterangan()});JTable previewTable=new JTable(preview);previewTable.setPreferredScrollableViewportSize(new Dimension(620,160));int ok=JOptionPane.showConfirmDialog(this,new JScrollPane(previewTable),"Preview data aktual ("+imported.size()+" baris)",JOptionPane.OK_CANCEL_OPTION);if(ok==JOptionPane.OK_OPTION){for(Transaksi t:imported){f.transaksi.add(t);row(t);}f.importedFiles.add(path);f.actualDataImported=true;JOptionPane.showMessageDialog(this,"Data aktual berhasil diimpor.");}}catch(Exception ex){JOptionPane.showMessageDialog(this,"Impor gagal: "+ex.getMessage(),"Validasi Excel",JOptionPane.ERROR_MESSAGE);}}
+    final MainFrame f;
+    final DefaultTableModel model = new DefaultTableModel(new String[]{"Tanggal", "Jenis", "Kategori", "Nominal", "Keterangan"}, 0);
+
+    public TransaksiPanel(MainFrame f) {
+        this.f = f;
+        setLayout(new BorderLayout(16, 16));
+        setBackground(UI.BG_DARK);
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        
+        JPanel top = new JPanel(new BorderLayout(12, 12));
+        top.setOpaque(false);
+        top.add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Transaksi</h1><font color='#C8D0FF'>Catat dan kelola arus uang usaha</font></html>"), BorderLayout.NORTH);
+        
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        actions.setOpaque(false);
+        JButton add = UI.button("Tambah Transaksi");
+        JButton template = UI.secondaryButton("Unduh Template Excel");
+        JButton imp = UI.secondaryButton("Impor Excel");
+        actions.add(add);
+        actions.add(template);
+        actions.add(imp);
+        
+        JTextField search = UI.input("");
+        actions.add(UI.searchBar(search, "Cari keterangan atau kategori"));
+        top.add(actions, BorderLayout.CENTER);
+        add(top, BorderLayout.NORTH);
+        
+        for (Transaksi t : f.transaksi) row(t);
+        
+        JTable table = new JTable(model);
+        UI.styleTable(table);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<DefaultTableModel>(model);
+        table.setRowSorter(sorter);
+        
+        search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            void filter() {
+                sorter.setRowFilter(search.getText().trim().isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(search.getText()), 1, 2, 4));
+            }
+        });
+        
+        add(UI.scrollPane(table), BorderLayout.CENTER);
+        add.addActionListener(e -> dialog());
+        template.addActionListener(e -> download());
+        imp.addActionListener(e -> importExcel());
+    }
+
+    private void row(Transaksi t) {
+        model.addRow(new Object[]{t.getTanggal(), t.getJenis(), t.getKategori(), UI.money(t.getNominal()), t.getKeterangan()});
+    }
+
+    private void dialog() {
+        JTextField nominal = new JTextField();
+        JTextField ket = new JTextField();
+        JComboBox<String> jenis = new JComboBox<String>(new String[]{"Pemasukan", "Pengeluaran"});
+        JComboBox<String> kat = new JComboBox<String>(new String[]{"Penjualan", "Bahan baku", "Operasional", "Lainnya"});
+        
+        JPanel p = UI.formGrid();
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(8, 8, 8, 8);
+        g.anchor = GridBagConstraints.WEST;
+        UI.field(p, g, "Jenis", jenis, 0);
+        UI.field(p, g, "Kategori", kat, 1);
+        UI.field(p, g, "Nominal", nominal, 2);
+        UI.field(p, g, "Keterangan", ket, 3);
+        
+        int ok = JOptionPane.showConfirmDialog(this, p, "Tambah transaksi", JOptionPane.OK_CANCEL_OPTION);
+        if (ok == JOptionPane.OK_OPTION) {
+            try {
+                Transaksi t = new Transaksi(LocalDate.now(), (String) jenis.getSelectedItem(), (String) kat.getSelectedItem(), Double.parseDouble(nominal.getText()), ket.getText());
+                f.transaksi.add(t);
+                row(t);
+                JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan.");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Nominal harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    private void download() {
+        JFileChooser c = new JFileChooser();
+        if (c.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                new ExcelService().buatTemplate(new File(c.getSelectedFile().getAbsolutePath() + ".xlsx"));
+                JOptionPane.showMessageDialog(this, "Template berhasil dibuat.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Gagal", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void importExcel() {
+        JFileChooser c = new JFileChooser();
+        if (c.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                String path = c.getSelectedFile().getCanonicalPath();
+                if (f.importedFiles.contains(path)) {
+                    JOptionPane.showMessageDialog(this, "File ini sudah pernah diimpor.", "Duplikasi", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                java.util.Set<String> names = new java.util.HashSet<String>();
+                for (Produk p : f.produk) names.add(p.getNama());
+                java.util.List<Transaksi> imported = new ExcelService().impor(c.getSelectedFile(), names);
+                
+                DefaultTableModel preview = new DefaultTableModel(new String[]{"Tanggal", "Produk", "Penjualan", "HPP", "Keterangan"}, 0);
+                for (Transaksi t : imported) preview.addRow(new Object[]{t.getTanggal(), t.getProduk(), UI.money(t.getNominal()), UI.money(t.getHpp()), t.getKeterangan()});
+                
+                JTable previewTable = new JTable(preview);
+                UI.styleTable(previewTable);
+                previewTable.setPreferredScrollableViewportSize(new Dimension(620, 160));
+                
+                int ok = JOptionPane.showConfirmDialog(this, new JScrollPane(previewTable), "Preview data aktual (" + imported.size() + " baris)", JOptionPane.OK_CANCEL_OPTION);
+                if (ok == JOptionPane.OK_OPTION) {
+                    for (Transaksi t : imported) {
+                        f.transaksi.add(t);
+                        row(t);
+                    }
+                    f.importedFiles.add(path);
+                    f.actualDataImported = true;
+                    JOptionPane.showMessageDialog(this, "Data aktual berhasil diimpor.");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Impor gagal: " + ex.getMessage(), "Validasi Excel", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 }
