@@ -24,7 +24,8 @@ class AnimatedCardPanel extends JPanel {
     }
 
     void clearPages() {
-        if (timer != null) timer.stop();
+        if (timer != null)
+            timer.stop();
         pages.clear();
         active = null;
         removeAll();
@@ -32,8 +33,10 @@ class AnimatedCardPanel extends JPanel {
 
     void showPage(final String name) {
         final JComponent next = pages.get(name);
-        if (next == null || next == active) return;
-        if (timer != null && timer.isRunning()) timer.stop();
+        if (next == null || next == active)
+            return;
+        if (timer != null && timer.isRunning())
+            timer.stop();
         final JComponent previous = active;
         if (previous == null) {
             active = next;
@@ -71,18 +74,15 @@ class AnimatedCardPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        Rectangle clip = g2.getClipBounds();
-        if (clip == null) clip = new Rectangle(0, 0, getWidth(), getHeight());
+        // Pakai ukuran seluruh panel, bukan area yang sedang di-repaint
+        int w = getWidth();
+        int h = getHeight();
 
-        RoundRectangle2D.Float shape = new RoundRectangle2D.Float(
-            clip.x + 2, clip.y + 2, clip.width - 4, clip.height - 4, 24, 24
-        );
+        RoundRectangle2D.Float shape = new RoundRectangle2D.Float(2, 2, w - 4, h - 4, 24, 24);
 
-        GradientPaint glass = new GradientPaint(
-            clip.x, clip.y, new Color(255, 255, 255, UI.lightMode ? 42 : 10),
-            clip.x, clip.y + clip.height, UI.GLASS_LIGHT
-        );
-        g2.setPaint(glass);
+        g2.setPaint(new GradientPaint(
+                0, 0, new Color(255, 255, 255, UI.lightMode ? 42 : 10),
+                0, h, UI.GLASS_LIGHT));
         g2.fill(shape);
 
         g2.setColor(UI.GLASS_BORDER);
@@ -91,9 +91,7 @@ class AnimatedCardPanel extends JPanel {
 
         g2.setColor(new Color(255, 255, 255, UI.lightMode ? 70 : 5));
         g2.setStroke(new BasicStroke(0.8f));
-        g2.draw(new RoundRectangle2D.Float(
-            clip.x + 4, clip.y + 4, clip.width - 8, clip.height - 8, 20, 20
-        ));
+        g2.draw(new RoundRectangle2D.Float(4, 4, w - 8, h - 8, 20, 20));
 
         g2.dispose();
     }
@@ -104,4 +102,4 @@ class AnimatedCardPanel extends JPanel {
             active.setBounds(0, 0, getWidth(), getHeight());
         }
     }
-}        
+}

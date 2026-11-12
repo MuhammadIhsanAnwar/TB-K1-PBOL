@@ -82,7 +82,7 @@ class UI {
         UIManager.put("Button.borderWidth", 0);
         UIManager.put("Table.font", new Font("SansSerif", Font.PLAIN, 13));
         UIManager.put("Table.foreground", TEXT_LIGHT);
-        UIManager.put("Table.selectionBackground", GLASS_ACTIVE);
+        UIManager.put("Table.selectionBackground", solid(GLASS_ACTIVE));
         UIManager.put("Table.selectionForeground", TEXT_LIGHT);
         UIManager.put("Table.rowHeight", 36);
         UIManager.put("Table.showHorizontalLines", false);
@@ -99,7 +99,7 @@ class UI {
         UIManager.put("ComboBox.foreground", TEXT_LIGHT);
         UIManager.put("ScrollPane.background", BG_DARK);
         UIManager.put("Table.background", BG_DARK);
-        UIManager.put("TableHeader.background", GLASS_ACTIVE);
+        UIManager.put("TableHeader.background", solid(GLASS_ACTIVE));
         UIManager.put("TableHeader.foreground", TEXT_LIGHT);
     }
 
@@ -463,22 +463,33 @@ class UI {
         return field;
     }
 
+    // Mencampur warna transparan dengan BG_DARK menjadi warna solid.
+    // Dipakai untuk komponen opaque agar tidak meninggalkan sisa gambar.
+    static Color solid(Color c) {
+        float a = c.getAlpha() / 255f;
+        return new Color(
+            Math.round(c.getRed() * a + BG_DARK.getRed() * (1 - a)),
+            Math.round(c.getGreen() * a + BG_DARK.getGreen() * (1 - a)),
+            Math.round(c.getBlue() * a + BG_DARK.getBlue() * (1 - a))
+        );
+    }
+
     static void styleTable(JTable table) {
         table.setRowHeight(44);
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(false);
         table.setGridColor(GLASS_BORDER);
         table.setIntercellSpacing(new Dimension(0, 1));
-        table.setSelectionBackground(GLASS_ACTIVE);
+        table.setSelectionBackground(solid(GLASS_ACTIVE));
         table.setSelectionForeground(TEXT_LIGHT);
         table.setFillsViewportHeight(true);
-        table.setBackground(new Color(0, 0, 0, 0));
+        table.setBackground(BG_DARK);
         table.setDefaultRenderer(Object.class, new StripeRenderer());
         JTableHeader header = table.getTableHeader();
         header.setPreferredSize(new Dimension(0, 44));
         header.setReorderingAllowed(false);
         header.setFont(new Font("SansSerif", Font.BOLD, 12));
-        header.setBackground(GLASS_ACTIVE);
+        header.setBackground(solid(GLASS_ACTIVE));
         header.setForeground(TEXT_LIGHT);
         header.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
     }
@@ -514,7 +525,7 @@ class UI {
             setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));
             setHorizontalAlignment(value instanceof Number ? SwingConstants.RIGHT : SwingConstants.LEFT);
             if (!selected) {
-                c.setBackground(row % 2 == 0 ? BG_DARK : GLASS_LIGHT);
+                c.setBackground(row % 2 == 0 ? BG_DARK : solid(GLASS_LIGHT));
                 c.setForeground(TEXT_LIGHT);
             }
             return c;
