@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ import java.util.List;
 public class SupabaseClient {
     private static final String DEFAULT_URL = "https://sisbkliywimhdygtimfx.supabase.co";
     private static final String DEFAULT_PUBLISHABLE_KEY = "sb_publishable_GXvWJfY75haUsaN7QEmVpg_o3Ux8x9a";
+    private static final int DEFAULT_TIMEOUT_MS = 12000;
+    private static final int SIGN_UP_TIMEOUT_MS = 60000;
     private static final Gson GSON = new Gson();
     private final String baseUrl;
     private final String publishableKey;
@@ -47,7 +50,17 @@ public class SupabaseClient {
         JsonObject metadata = new JsonObject();
         metadata.addProperty("nama", fullName.trim());
         body.add("data", metadata);
-        String response = send("POST", "/auth/v1/signup", GSON.toJson(body), null);
+        String response;
+        try {
+            response = send("POST", "/auth/v1/signup", GSON.toJson(body), null, null,
+                SIGN_UP_TIMEOUT_MS, SIGN_UP_TIMEOUT_MS);
+        } catch (SocketTimeoutException ex) {
+            throw new IOException(
+                "Supabase melewati batas waktu saat mendaftar. Akun mungkin sudah dibuat "
+                    + "tetapi respons/email konfirmasi terlambat. Periksa Authentication > Users "
+                    + "dan folder spam sebelum mencoba daftar lagi. Periksa juga SMTP dan Auth Logs.",
+                ex);
+        }
         JsonObject json = JsonParser.parseString(response).getAsJsonObject();
         return json.has("access_token") && !json.get("access_token").isJsonNull()
             && !json.get("access_token").getAsString().trim().isEmpty()
@@ -154,12 +167,19 @@ public class SupabaseClient {
 
     private String send(String method, String path, String body, AuthSession session,
                         String prefer) throws IOException {
+        return send(method, path, body, session, prefer,
+            DEFAULT_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+    }
+
+    private String send(String method, String path, String body, AuthSession session,
+                        String prefer, int connectTimeoutMs, int readTimeoutMs)
+            throws IOException {
         refreshIfNeeded(session);
         HttpURLConnection connection = (HttpURLConnection) new URL(baseUrl + path).openConnection();
         try {
             connection.setRequestMethod(method);
-            connection.setConnectTimeout(12000);
-            connection.setReadTimeout(12000);
+            connection.setConnectTimeout(connectTimeoutMs);
+            connection.setReadTimeout(readTimeoutMs);
             connection.setRequestProperty("apikey", publishableKey);
             if (session != null) {
                 connection.setRequestProperty("Authorization", "Bearer " + session.accessToken);

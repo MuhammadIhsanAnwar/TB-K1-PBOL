@@ -101,9 +101,24 @@ on conflict (id) do update set
     last_active_at = coalesce(excluded.last_active_at, existing_user.last_active_at),
     verified_at = excluded.verified_at;
 
-update public.users
-set role = 'super_admin'
-where lower(email) = lower('warungaju@neoverse.my.id');
+do $$
+declare
+    admin_user_id uuid;
+begin
+    select id into admin_user_id
+    from auth.users
+    where lower(email) = lower('warungaju@neoverse.my.id')
+      and email_confirmed_at is not null;
+
+    if admin_user_id is null then
+        raise notice 'Create and verify warungaju@neoverse.my.id in Supabase Auth, then rerun the Super Admin promotion block.';
+    else
+        update public.users
+        set role = 'super_admin', is_active = true
+        where id = admin_user_id;
+    end if;
+end;
+$$;
 
 create or replace function public.is_super_admin()
 returns boolean

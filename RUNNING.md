@@ -124,14 +124,32 @@ Sebelum aplikasi digunakan:
    verifikasi, serta kebijakan Row Level Security.
 2. Jalankan aplikasi dan daftarkan akun. Pendaftaran dari aplikasi selalu
    membuat role `umkm`; verifikasi email bila Supabase memintanya.
-3. Jadikan akun `warungaju@neoverse.my.id` sebagai Super Admin melalui SQL
-   Editor. Perintah ini juga ada di `online_schema.sql`; jalankan lagi setelah
-   akun email tersebut didaftarkan jika akun belum ada saat migrasi:
+3. Buat akun `warungaju@neoverse.my.id` di **Supabase Dashboard →
+   Authentication → Users** (atau daftar lewat aplikasi), tetapkan password di
+   Supabase Auth, lalu verifikasi emailnya. SQL tidak membuat akun Auth ataupun
+   menyimpan password. Setelah akun terverifikasi, jalankan blok promosi Super
+   Admin yang ada di `online_schema.sql`; jika migrasi dijalankan sebelum akun
+   dibuat, jalankan ulang blok berikut:
 
    ```sql
-   update public.users
-   set role = 'super_admin'
-   where lower(email) = lower('warungaju@neoverse.my.id');
+   do $$
+   declare
+       admin_user_id uuid;
+   begin
+       select id into admin_user_id
+       from auth.users
+       where lower(email) = lower('warungaju@neoverse.my.id')
+         and email_confirmed_at is not null;
+
+       if admin_user_id is null then
+           raise notice 'Buat dan verifikasi akun di Supabase Auth terlebih dahulu.';
+       else
+           update public.users
+           set role = 'super_admin', is_active = true
+           where id = admin_user_id;
+       end if;
+   end;
+   $$;
    ```
 
 4. Masuk kembali dengan akun tersebut untuk membuka panel Super Admin. Panel
@@ -182,6 +200,11 @@ Simpan pengaturan, pastikan domain email memiliki DNS/mail record yang valid,
 lalu uji pendaftaran dan pengiriman ulang email konfirmasi. Jika provider SMTP
 menolak koneksi port 465, periksa port submission TLS yang didukung provider
 email dan setel port yang sesuai di dashboard.
+
+Jika proses daftar menampilkan `Read timed out`, respons Supabase mungkin
+terlambat saat memproses pengiriman email. Akun bisa saja sudah tercatat walaupun
+aplikasi belum menerima respons. Periksa **Authentication → Users**, email
+konfirmasi (termasuk folder spam), dan **Auth Logs** sebelum mencoba daftar lagi.
 
 Kredensial SMTP adalah rahasia server-side dan tidak boleh dimasukkan ke aplikasi
 desktop. Karena password mailbox sempat dibagikan di chat, ganti/rotasi password
