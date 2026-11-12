@@ -8,25 +8,34 @@ public class MainFrame extends JFrame {
     final CardLayout pages = new CardLayout();
     final JPanel pageContainer = new JPanel(pages);
     final AnimatedCardPanel content = new AnimatedCardPanel();
-    final java.util.List<Transaksi> transaksi = new ArrayList<Transaksi>();
-    final java.util.List<Produk> produk = new ArrayList<Produk>();
-    final Set<String> importedFiles = new HashSet<String>();
+    final java.util.List<Transaksi> transaksi = new ArrayList<>();
+    final java.util.List<Produk> produk = new ArrayList<>();
+    final Set<String> importedFiles = new HashSet<>();
     boolean actualDataImported;
     final LaporanKeuangan laporan = new LaporanKeuangan();
-    private boolean welcomeVisible = true;
+    final SupabaseClient supabase;
+    final AuthSession session;
+    final AppUser user;
+    final WorkspaceData workspace;
+    private boolean welcomeVisible = false;
     private String currentPage = "Dashboard";
-    private final Map<String, JButton> navButtons = new LinkedHashMap<String, JButton>();
+    private final Map<String, JButton> navButtons = new LinkedHashMap<>();
 
-    public MainFrame() {
+    public MainFrame(SupabaseClient supabase, AuthSession session, AppUser user,
+                     WorkspaceData workspace) {
+        this.supabase = supabase;
+        this.session = session;
+        this.user = user;
+        this.workspace = workspace;
+        this.workspace.normalize();
+        transaksi.addAll(workspace.toTransactions());
+        produk.addAll(workspace.toProducts());
+        actualDataImported = workspace.actualDataImported;
         setTitle("WARUNGAJU - Perencanaan dan Simulasi Keuangan UMKM");
         setSize(1280, 800);
         setMinimumSize(new Dimension(980, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        transaksi.add(new Transaksi(java.time.LocalDate.now(), "Pemasukan", "Penjualan", 1250000, "Penjualan harian"));
-        transaksi.add(new Transaksi(java.time.LocalDate.now().minusDays(1), "Pengeluaran", "Bahan baku", 450000, "Belanja bahan"));
-        produk.add(new Produk("Nasi Goreng", 9000, 18000, 45));
-        produk.add(new Produk("Es Teh Manis", 2500, 6000, 80));
         build();
     }
 
@@ -127,11 +136,15 @@ public class MainFrame extends JFrame {
         account.setOpaque(false);
         JLabel status = new JLabel("●");
         status.setForeground(new Color(114, 226, 164));
-        JLabel user = new JLabel("Warung Maju Jaya  /  Admin");
-        user.setForeground(UI.TEXT_LIGHT);
+        JLabel accountName = new JLabel((user.fullName == null || user.fullName.trim().isEmpty()
+            ? user.email : user.fullName) + "  /  UMKM");
+        accountName.setForeground(UI.TEXT_LIGHT);
+        JButton logout = UI.secondaryButton("Keluar");
+        logout.addActionListener(event -> logout());
         account.add(status);
-        account.add(user);
+        account.add(accountName);
         account.add(UI.themeToggle(this::switchTheme));
+        account.add(logout);
         p.add(brand, BorderLayout.WEST);
         p.add(account, BorderLayout.EAST);
         return p;
@@ -196,6 +209,40 @@ public class MainFrame extends JFrame {
         for (Map.Entry<String, JButton> entry : navButtons.entrySet()) {
             setNavActive(entry.getValue(), entry.getKey().equals(page));
         }
+    }
+
+    boolean persistWorkspace() {
+        workspace.transactions = new ArrayList<>();
+        for (Transaksi item : transaksi) {
+            workspace.transactions.add(new WorkspaceData.TransactionData(item));
+        }
+        workspace.products = new ArrayList<>();
+        for (Produk item : produk) {
+            workspace.products.add(new WorkspaceData.ProductData(item));
+        }
+        workspace.actualDataImported = actualDataImported;
+        try {
+            supabase.saveWorkspace(session, workspace);
+            return true;
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Perubahan belum tersimpan ke cloud: " + ex.getMessage(),
+                "Sinkronisasi gagal", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private void logout() {
+        try {
+            supabase.signOut(session);
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Sesi lokal ditutup, tetapi Supabase tidak dapat mengakhiri sesi: "
+                    + ex.getMessage(),
+                "Keluar", JOptionPane.WARNING_MESSAGE);
+        }
+        dispose();
+        new AuthFrame().setVisible(true);
     }
 
     private void setNavActive(JButton button, boolean active) {

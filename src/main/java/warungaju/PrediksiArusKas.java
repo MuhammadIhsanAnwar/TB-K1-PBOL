@@ -5,7 +5,7 @@ import java.util.List;
 
 public class PrediksiArusKas {
     public List<Month> prediksi(double saldoAwal, double pemasukanBulanan, double pengeluaranBulanan, int bulan) {
-        List<Month> result = new ArrayList<Month>(); double saldo = saldoAwal;
+        List<Month> result = new ArrayList<>(); double saldo = saldoAwal;
         for (int i=1;i<=bulan;i++) { saldo += pemasukanBulanan - pengeluaranBulanan; result.add(new Month("Bulan "+i,pemasukanBulanan,pengeluaranBulanan,saldo)); }
         return result;
     }

@@ -2,6 +2,7 @@ package warungaju;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -40,12 +41,15 @@ public class TransaksiPanel extends JPanel {
         
         JTable table = new JTable(model);
         UI.styleTable(table);
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<DefaultTableModel>(model);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
         
         search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            @Override
             public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
             void filter() {
                 sorter.setRowFilter(search.getText().trim().isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(search.getText()), 1, 2, 4));
@@ -65,8 +69,8 @@ public class TransaksiPanel extends JPanel {
     private void dialog() {
         JTextField nominal = new JTextField();
         JTextField ket = new JTextField();
-        JComboBox<String> jenis = new JComboBox<String>(new String[]{"Pemasukan", "Pengeluaran"});
-        JComboBox<String> kat = new JComboBox<String>(new String[]{"Penjualan", "Bahan baku", "Operasional", "Lainnya"});
+        JComboBox<String> jenis = new JComboBox<>(new String[]{"Pemasukan", "Pengeluaran"});
+        JComboBox<String> kat = new JComboBox<>(new String[]{"Penjualan", "Bahan baku", "Operasional", "Lainnya"});
         
         JPanel p = UI.formGrid();
         GridBagConstraints g = new GridBagConstraints();
@@ -83,7 +87,9 @@ public class TransaksiPanel extends JPanel {
                 Transaksi t = new Transaksi(LocalDate.now(), (String) jenis.getSelectedItem(), (String) kat.getSelectedItem(), Double.parseDouble(nominal.getText()), ket.getText());
                 f.transaksi.add(t);
                 row(t);
-                JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan.");
+                if (f.persistWorkspace()) {
+                    JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan dan disinkronkan.");
+                }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Nominal harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
             }
@@ -96,7 +102,7 @@ public class TransaksiPanel extends JPanel {
             try {
                 new ExcelService().buatTemplate(new File(c.getSelectedFile().getAbsolutePath() + ".xlsx"));
                 JOptionPane.showMessageDialog(this, "Template berhasil dibuat.");
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Gagal", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -111,7 +117,7 @@ public class TransaksiPanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "File ini sudah pernah diimpor.", "Duplikasi", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                java.util.Set<String> names = new java.util.HashSet<String>();
+                java.util.Set<String> names = new java.util.HashSet<>();
                 for (Produk p : f.produk) names.add(p.getNama());
                 java.util.List<Transaksi> imported = new ExcelService().impor(c.getSelectedFile(), names);
                 
@@ -130,9 +136,11 @@ public class TransaksiPanel extends JPanel {
                     }
                     f.importedFiles.add(path);
                     f.actualDataImported = true;
-                    JOptionPane.showMessageDialog(this, "Data aktual berhasil diimpor.");
+                    if (f.persistWorkspace()) {
+                        JOptionPane.showMessageDialog(this, "Data aktual berhasil diimpor dan disinkronkan.");
+                    }
                 }
-            } catch (Exception ex) {
+            } catch (IOException | RuntimeException ex) {
                 JOptionPane.showMessageDialog(this, "Impor gagal: " + ex.getMessage(), "Validasi Excel", JOptionPane.ERROR_MESSAGE);
             }
         }

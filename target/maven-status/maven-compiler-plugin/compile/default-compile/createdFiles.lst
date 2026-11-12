@@ -1,3 +1,12 @@
-warungaju\Transaksi.class
-warungaju\LaporanKeuangan.class
-warungaju\ExcelService.class
+warungaju\WorkspaceData$CashFlowSettings.class
+warungaju\AuthSession.class
+warungaju\AuthFrame$1.class
+warungaju\WorkspaceData$TransactionData.class
+warungaju\WorkspaceData$SimulationSettings.class
+warungaju\MainFrame$1.class
+warungaju\AuthFrame$3.class
+warungaju\AdminFrame$1.class
+warungaju\WorkspaceData$ProductData.class
+warungaju\AdminFrame$2.class
+warungaju\AuthFrame$2.class
+warungaju\WorkspaceData.class

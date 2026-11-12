@@ -108,3 +108,81 @@ Aplikasi dimulai dengan data contoh. Tambahkan produk terlebih dahulu sebelum me
 - Model `Produk` dan `Transaksi` menyimpan data aplikasi.
 - `SimulasiBisnis`, `PrediksiArusKas`, dan `LaporanKeuangan` menangani perhitungan.
 - `ExcelService` membuat template dan mengimpor data menggunakan Apache POI.
+
+## Supabase dan akun online
+
+Aplikasi memakai Supabase Auth untuk pendaftaran/login dan menyimpan data kerja
+UMKM di cloud. URL dan publishable key proyek sudah dikonfigurasi sebagai nilai
+default yang aman untuk aplikasi klien. Anda dapat menggantinya melalui
+environment variable `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`.
+
+Sebelum aplikasi digunakan:
+
+1. Buka `src/main/resources/db/supabase/online_schema.sql` dan jalankan seluruh
+   isinya melalui **Supabase Dashboard → SQL Editor**. Ini membuat tabel
+   `public.users`, role, tabel workspace, sinkronisasi tanggal aktivitas dan
+   verifikasi, serta kebijakan Row Level Security.
+2. Jalankan aplikasi dan daftarkan akun. Pendaftaran dari aplikasi selalu
+   membuat role `umkm`; verifikasi email bila Supabase memintanya.
+3. Jadikan akun `warungaju@neoverse.my.id` sebagai Super Admin melalui SQL
+   Editor. Perintah ini juga ada di `online_schema.sql`; jalankan lagi setelah
+   akun email tersebut didaftarkan jika akun belum ada saat migrasi:
+
+   ```sql
+   update public.users
+   set role = 'super_admin'
+   where lower(email) = lower('warungaju@neoverse.my.id');
+   ```
+
+4. Masuk kembali dengan akun tersebut untuk membuka panel Super Admin. Panel
+   hanya menampilkan profil dengan `is_active = true`. Akun UMKM masuk ke
+   dashboard UMKM.
+
+Jika ingin membuat akun Super Admin baru, buat/invite akun terlebih dahulu
+melalui **Supabase Dashboard → Authentication → Users** agar kredensial dikelola
+oleh Supabase Auth, lalu jalankan SQL berikut dengan email akun tersebut:
+
+```sql
+update public.users
+set role = 'super_admin'
+where lower(email) = lower('admin@example.com')
+returning id, email, nama, role;
+```
+
+Tabel `public.users` berisi `id`, `email`, `nama`, `role`, `is_active`,
+`last_active_at`, `created_at`, dan `verified_at`. Kolom password sengaja tidak
+ada: kata sandi disimpan dan diverifikasi oleh Supabase Auth di `auth.users`
+dalam bentuk terproteksi, bukan diduplikasi ke tabel aplikasi. Jangan mencoba
+membuat akun dengan `INSERT` langsung ke `auth.users`.
+
+Transaksi, produk, pengaturan simulasi, dan input prediksi arus kas disimpan per
+akun. Data yang sama akan dimuat saat akun masuk dari perangkat lain. Akses data
+dibatasi oleh RLS berdasarkan user yang sedang login; role Super Admin tidak
+memberi akses ke workspace keuangan UMKM.
+
+Jangan pernah memasukkan Supabase **secret/service-role key** ke aplikasi,
+repository, atau environment variable di komputer klien. Aplikasi hanya memakai
+publishable key bersama access token hasil login.
+
+### Pengirim email konfirmasi
+
+Pengaturan SMTP Supabase harus dilakukan di **Supabase Dashboard → Project
+Settings → Authentication → SMTP Settings** (nama menu dapat berbeda sedikit).
+Aktifkan custom SMTP dan masukkan:
+
+- Sender name: `WARUNGAJU`
+- Sender email: `warungaju@neoverse.my.id`
+- SMTP host: `mail.neoverse.my.id`
+- SMTP port: `465` (SSL/TLS)
+- SMTP username: `warungaju@neoverse.my.id`
+- SMTP password: masukkan password mailbox di dashboard saja; jangan simpan di
+  source code, SQL, atau repository.
+
+Simpan pengaturan, pastikan domain email memiliki DNS/mail record yang valid,
+lalu uji pendaftaran dan pengiriman ulang email konfirmasi. Jika provider SMTP
+menolak koneksi port 465, periksa port submission TLS yang didukung provider
+email dan setel port yang sesuai di dashboard.
+
+Kredensial SMTP adalah rahasia server-side dan tidak boleh dimasukkan ke aplikasi
+desktop. Karena password mailbox sempat dibagikan di chat, ganti/rotasi password
+tersebut sebelum memasukkannya ke dashboard Supabase.

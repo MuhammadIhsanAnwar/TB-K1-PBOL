@@ -19,12 +19,13 @@ public class SimulasiPanel extends JPanel {
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(10, 10, 10, 10);
         
-        JTextField bahan = UI.input("9000");
-        JTextField karyawan = UI.input("2");
-        JTextField gaji = UI.input("2500000");
-        JTextField jam = UI.input("10");
-        JTextField target = UI.input("100");
-        JTextField harga = UI.input("18000");
+        WorkspaceData.SimulationSettings saved = f.workspace.simulation;
+        JTextField bahan = UI.input(String.valueOf(saved.ingredientPrice));
+        JTextField karyawan = UI.input(String.valueOf(saved.employeeCount));
+        JTextField gaji = UI.input(String.valueOf(saved.salaryPerEmployee));
+        JTextField jam = UI.input(String.valueOf(saved.operatingHours));
+        JTextField target = UI.input(String.valueOf(saved.monthlySalesTarget));
+        JTextField harga = UI.input(String.valueOf(saved.sellingPrice));
         
         UI.field(form, g, "Harga bahan baku / unit", bahan, 0);
         UI.field(form, g, "Jumlah karyawan", karyawan, 1);
@@ -64,6 +65,13 @@ public class SimulasiPanel extends JPanel {
                     Double.parseDouble(target.getText()),
                     Double.parseDouble(harga.getText())
                 );
+                saved.ingredientPrice = Double.parseDouble(bahan.getText());
+                saved.employeeCount = Integer.parseInt(karyawan.getText());
+                saved.salaryPerEmployee = Double.parseDouble(gaji.getText());
+                saved.operatingHours = Double.parseDouble(jam.getText());
+                saved.monthlySalesTarget = Double.parseDouble(target.getText());
+                saved.sellingPrice = Double.parseDouble(harga.getText());
+                f.persistWorkspace();
                 result.setText(UI.html("<html><h2 style='color:#DFFF00'>" + UI.money(r.laba) + "</h2><p style='color:#FFFFF0'>Pendapatan: " + UI.money(r.pendapatan) + "<br>HPP: " + UI.money(r.hpp) + "<br>Operasional: " + UI.money(r.operasional) + "<br>Margin: " + String.format("%.1f%%", r.margin) + "</p></html>"));
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Semua variabel harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);

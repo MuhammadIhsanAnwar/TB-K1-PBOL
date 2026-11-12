@@ -69,16 +69,19 @@ public class ProdukPanel extends JPanel {
         UI.styleTable(table);
 
         final TableRowSorter<DefaultTableModel> sorter =
-            new TableRowSorter<DefaultTableModel>(model);
+            new TableRowSorter<>(model);
 
         table.setRowSorter(sorter);
 
         txtCari.getDocument().addDocumentListener(new DocumentListener() {
 
+            @Override
             public void insertUpdate(DocumentEvent e) { filter(); }
 
+            @Override
             public void removeUpdate(DocumentEvent e) { filter(); }
 
+            @Override
             public void changedUpdate(DocumentEvent e) { filter(); }
 
             private void filter() {
@@ -178,6 +181,7 @@ public class ProdukPanel extends JPanel {
             if (pilihan == JOptionPane.YES_OPTION) {
                 f.produk.remove(p);
                 muatUlang();
+                f.persistWorkspace();
             }
 
         } catch (ValidasiException ex) {
@@ -216,6 +220,7 @@ public class ProdukPanel extends JPanel {
             }
 
             muatUlang();
+            f.persistWorkspace();
 
         } catch (ValidasiException ex) {
             peringatan(ex.getMessage());
@@ -320,6 +325,7 @@ public class ProdukPanel extends JPanel {
         }
 
         muatUlang();
+        f.persistWorkspace();
     }
 
 

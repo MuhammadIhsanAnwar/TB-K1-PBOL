@@ -178,11 +178,13 @@ class UI {
             setToolTipText(lightMode ? "Switch to dark mode" : "Switch to light mode");
             getAccessibleContext().setAccessibleName("Toggle light and dark mode");
             addMouseListener(new MouseAdapter() {
+                @Override
                 public void mouseEntered(MouseEvent e) {
                     hovering = true;
                     repaint();
                 }
 
+                @Override
                 public void mouseExited(MouseEvent e) {
                     hovering = false;
                     repaint();
@@ -248,10 +250,6 @@ class UI {
         }
     }
 
-    static JPanel card(String title, String value, Color color) {
-        return card(title, value, color, null);
-    }
-
     static JPanel card(String title, String value, Color color, final Runnable onClick) {
         JPanel p = glassPanel();
         p.setLayout(new BorderLayout(8, 8));
@@ -270,6 +268,7 @@ class UI {
 
     private static void addCardHover(final JPanel panel, final JLabel title, final JLabel value, final Runnable onClick) {
         MouseAdapter hover = new MouseAdapter() {
+            @Override
             public void mouseEntered(MouseEvent e) {
                 if (onClick != null) panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 panel.setBorder(BorderFactory.createCompoundBorder(
@@ -278,6 +277,7 @@ class UI {
                 ));
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
                 Component source = e.getComponent();
                 Point point = SwingUtilities.convertPoint(source, e.getPoint(), panel);
@@ -286,6 +286,7 @@ class UI {
                 }
             }
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (onClick != null && SwingUtilities.isLeftMouseButton(e)) onClick.run();
             }
@@ -325,7 +326,9 @@ class UI {
                 repaint();
             });
             addMouseListener(new MouseAdapter() {
+                @Override
                 public void mouseEntered(MouseEvent e) { animation.start(); }
+                @Override
                 public void mouseExited(MouseEvent e) { animation.start(); }
             });
             getModel().addChangeListener(e -> {
@@ -391,11 +394,13 @@ class UI {
         });
 
         button.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseEntered(MouseEvent e) {
                 target[0] = 1;
                 timer.start();
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
                 target[0] = 0;
                 timer.start();
@@ -405,11 +410,13 @@ class UI {
 
     static void addGlassHover(final JButton button) {
         button.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseEntered(MouseEvent e) {
                 button.setOpaque(true);
                 button.setBackground(GLASS_ACTIVE);
                 button.setForeground(ACCENT);
             }
+            @Override
             public void mouseExited(MouseEvent e) {
                 if (!Boolean.TRUE.equals(button.getClientProperty("warungaju.active"))) {
                     button.setOpaque(false);
@@ -520,6 +527,7 @@ class UI {
     }
 
     static class StripeRenderer extends DefaultTableCellRenderer {
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, selected, focused, row, column);
             setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));

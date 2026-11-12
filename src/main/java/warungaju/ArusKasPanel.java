@@ -16,9 +16,10 @@ public class ArusKasPanel extends JPanel {
         JPanel input = UI.glassPanel();
         input.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JTextField saldo = UI.input("3500000");
-        JTextField in = UI.input("1250000");
-        JTextField out = UI.input("650000");
+        WorkspaceData.CashFlowSettings saved = f.workspace.cashFlow;
+        JTextField saldo = UI.input(String.valueOf(saved.startingBalance));
+        JTextField in = UI.input(String.valueOf(saved.monthlyIncome));
+        JTextField out = UI.input(String.valueOf(saved.monthlyExpenses));
         JButton run = UI.button("Prediksi 6 Bulan");
 
         input.setLayout(new GridBagLayout());
@@ -46,9 +47,13 @@ public class ArusKasPanel extends JPanel {
         run.addActionListener(e -> {
             m.setRowCount(0);
             try {
-                for (PrediksiArusKas.Month x : new PrediksiArusKas().prediksi(Double.parseDouble(saldo.getText()), Double.parseDouble(in.getText()), Double.parseDouble(out.getText()), 6)) {
+                saved.startingBalance = Double.parseDouble(saldo.getText());
+                saved.monthlyIncome = Double.parseDouble(in.getText());
+                saved.monthlyExpenses = Double.parseDouble(out.getText());
+                for (PrediksiArusKas.Month x : new PrediksiArusKas().prediksi(saved.startingBalance, saved.monthlyIncome, saved.monthlyExpenses, 6)) {
                     m.addRow(new Object[]{x.nama, UI.money(x.pemasukan), UI.money(x.pengeluaran), UI.money(x.saldo), x.saldo < 0 ? "DEFISIT" : "Aman"});
                 }
+                f.persistWorkspace();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Input harus angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
             }

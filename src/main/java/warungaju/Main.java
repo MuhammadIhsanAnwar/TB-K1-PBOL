@@ -5,12 +5,10 @@ import com.formdev.flatlaf.FlatDarkLaf;
 
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() { 
-                FlatDarkLaf.setup();
-                UI.initTheme();
-                new MainFrame().setVisible(true);
-            }
+        SwingUtilities.invokeLater(() -> {
+            FlatDarkLaf.setup();
+            UI.initTheme();
+            new AuthFrame().setVisible(true);
         });
     }
 }
