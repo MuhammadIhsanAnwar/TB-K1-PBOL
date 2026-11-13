@@ -87,9 +87,9 @@ public class TransaksiPanel extends JPanel {
                 Transaksi t = new Transaksi(LocalDate.now(), (String) jenis.getSelectedItem(), (String) kat.getSelectedItem(), Double.parseDouble(nominal.getText()), ket.getText());
                 f.transaksi.add(t);
                 row(t);
-                if (f.persistWorkspace()) {
+                f.persistWorkspace(() -> {
                     JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan dan disinkronkan.");
-                }
+                });
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Nominal harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
             }
@@ -136,9 +136,9 @@ public class TransaksiPanel extends JPanel {
                     }
                     f.importedFiles.add(path);
                     f.actualDataImported = true;
-                    if (f.persistWorkspace()) {
+                    f.persistWorkspace(() -> {
                         JOptionPane.showMessageDialog(this, "Data aktual berhasil diimpor dan disinkronkan.");
-                    }
+                    });
                 }
             } catch (IOException | RuntimeException ex) {
                 JOptionPane.showMessageDialog(this, "Impor gagal: " + ex.getMessage(), "Validasi Excel", JOptionPane.ERROR_MESSAGE);

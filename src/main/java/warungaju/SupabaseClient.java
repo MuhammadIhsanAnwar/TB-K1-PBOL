@@ -219,17 +219,28 @@ public class SupabaseClient {
     }
 
     private String errorMessage(String response, int status) {
+        String detail = null;
         if (response != null && !response.trim().isEmpty()) {
             try {
                 JsonObject json = JsonParser.parseString(response).getAsJsonObject();
                 for (String key : new String[]{"msg", "message", "error_description", "error"}) {
                     if (json.has(key) && !json.get(key).isJsonNull()) {
-                        return json.get(key).getAsString();
+                        detail = json.get(key).getAsString();
+                        break;
                     }
                 }
             } catch (IllegalStateException | com.google.gson.JsonSyntaxException ex) {
-                return "Supabase mengembalikan HTTP " + status + ": " + response;
+                detail = response;
             }
+        }
+        if (status == HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
+            return "Supabase mengembalikan gateway timeout (504). Permintaan daftar mungkin "
+                + "sudah diproses; cek Authentication > Users sebelum mencoba lagi. Periksa "
+                + "juga Auth Logs dan konfigurasi SMTP. Detail: "
+                + (detail == null ? "gateway timeout" : detail);
+        }
+        if (detail != null) {
+            return "Supabase mengembalikan HTTP " + status + ": " + detail;
         }
         return "Permintaan Supabase gagal (HTTP " + status + ").";
     }

@@ -2,6 +2,10 @@ package warungaju;
 
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
 public class MainFrame extends JFrame {
@@ -17,9 +21,18 @@ public class MainFrame extends JFrame {
     final AuthSession session;
     final AppUser user;
     final WorkspaceData workspace;
+    private final ExecutorService workspaceSync = createWorkspaceSyncExecutor();
     private boolean welcomeVisible = false;
     private String currentPage = "Dashboard";
     private final Map<String, JButton> navButtons = new LinkedHashMap<>();
+
+    private static ExecutorService createWorkspaceSyncExecutor() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<Runnable>(), task ->
+                new Thread(task, "warungaju-supabase-sync"));
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
+    }
 
     public MainFrame(SupabaseClient supabase, AuthSession session, AppUser user,
                      WorkspaceData workspace) {
@@ -211,24 +224,48 @@ public class MainFrame extends JFrame {
         }
     }
 
-    boolean persistWorkspace() {
-        workspace.transactions = new ArrayList<>();
+    void persistWorkspace() {
+        persistWorkspace(null);
+    }
+
+    void persistWorkspace(final Runnable onSuccess) {
+        final WorkspaceData snapshot = new WorkspaceData();
         for (Transaksi item : transaksi) {
-            workspace.transactions.add(new WorkspaceData.TransactionData(item));
+            snapshot.transactions.add(new WorkspaceData.TransactionData(item));
         }
-        workspace.products = new ArrayList<>();
         for (Produk item : produk) {
-            workspace.products.add(new WorkspaceData.ProductData(item));
+            snapshot.products.add(new WorkspaceData.ProductData(item));
         }
-        workspace.actualDataImported = actualDataImported;
+        snapshot.actualDataImported = actualDataImported;
+        snapshot.simulation.ingredientPrice = workspace.simulation.ingredientPrice;
+        snapshot.simulation.employeeCount = workspace.simulation.employeeCount;
+        snapshot.simulation.salaryPerEmployee = workspace.simulation.salaryPerEmployee;
+        snapshot.simulation.operatingHours = workspace.simulation.operatingHours;
+        snapshot.simulation.monthlySalesTarget = workspace.simulation.monthlySalesTarget;
+        snapshot.simulation.sellingPrice = workspace.simulation.sellingPrice;
+        snapshot.cashFlow.startingBalance = workspace.cashFlow.startingBalance;
+        snapshot.cashFlow.monthlyIncome = workspace.cashFlow.monthlyIncome;
+        snapshot.cashFlow.monthlyExpenses = workspace.cashFlow.monthlyExpenses;
         try {
-            supabase.saveWorkspace(session, workspace);
-            return true;
-        } catch (java.io.IOException ex) {
+            workspaceSync.execute(() -> {
+                try {
+                    supabase.saveWorkspace(session, snapshot);
+                    if (onSuccess != null) {
+                        SwingUtilities.invokeLater(() -> {
+                            if (isDisplayable()) onSuccess.run();
+                        });
+                    }
+                } catch (java.io.IOException ex) {
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+                        "Perubahan belum tersimpan ke cloud: " + ex.getMessage()
+                            + ". Periksa koneksi lalu coba simpan kembali.",
+                        "Sinkronisasi gagal", JOptionPane.ERROR_MESSAGE));
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ex) {
             JOptionPane.showMessageDialog(this,
-                "Perubahan belum tersimpan ke cloud: " + ex.getMessage(),
+                "Sinkronisasi cloud tidak dapat dijalankan: " + ex.getMessage(),
                 "Sinkronisasi gagal", JOptionPane.ERROR_MESSAGE);
-            return false;
         }
     }
 

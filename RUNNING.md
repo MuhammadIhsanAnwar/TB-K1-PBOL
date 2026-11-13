@@ -205,6 +205,9 @@ Jika proses daftar menampilkan `Read timed out`, respons Supabase mungkin
 terlambat saat memproses pengiriman email. Akun bisa saja sudah tercatat walaupun
 aplikasi belum menerima respons. Periksa **Authentication → Users**, email
 konfirmasi (termasuk folder spam), dan **Auth Logs** sebelum mencoba daftar lagi.
+Jika muncul HTTP `504`, cek **Auth Logs** dan status project Supabase; periksa
+juga konfigurasi, koneksi, serta limit pengiriman SMTP. Jangan langsung
+mengulangi pendaftaran sebelum memastikan apakah akun sudah terbentuk.
 
 Kredensial SMTP adalah rahasia server-side dan tidak boleh dimasukkan ke aplikasi
 desktop. Karena password mailbox sempat dibagikan di chat, ganti/rotasi password
