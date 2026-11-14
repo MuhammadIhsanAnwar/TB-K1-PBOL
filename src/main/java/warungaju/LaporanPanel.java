@@ -1,6 +1,7 @@
 package warungaju;
 
 import java.awt.*;
+import java.util.List;
 import javax.swing.*;
 
 public class LaporanPanel extends JPanel {
@@ -9,53 +10,49 @@ public class LaporanPanel extends JPanel {
         setBackground(UI.BG_DARK);
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
-        
-        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Laporan Keuangan</h1><font color='#C8D0FF'>Ringkasan laba rugi dan posisi keuangan usaha</font></html>"), BorderLayout.NORTH);
-        
-        double in = f.laporan.pemasukan(f.transaksi);
-        double out = f.laporan.pengeluaran(f.transaksi);
-        
+
+        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Laporan Keuangan</h1><font color='#C8D0FF'>Ringkasan laba rugi, arus kas, dan posisi keuangan usaha</font></html>"), BorderLayout.NORTH);
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.setBackground(UI.BG_DARK);
         tabs.setForeground(UI.TEXT_LIGHT);
-        
-        JPanel laba = UI.glassPanel();
-        laba.setLayout(new GridLayout(5, 2, 10, 10));
-        laba.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-        
-        addLabelValuePair(laba, "Total pendapatan", UI.money(in));
-        addLabelValuePair(laba, "Harga pokok penjualan", UI.money(in * 0.45));
-        addLabelValuePair(laba, "Laba kotor", UI.money(in * 0.55));
-        addLabelValuePair(laba, "Biaya operasional", UI.money(out));
-        addLabelValuePair(laba, "Laba bersih", UI.money(in * 0.55 - out));
-        
-        tabs.addTab("Laporan Laba Rugi", laba);
-        
-        JPanel neraca = UI.glassPanel();
-        neraca.setLayout(new GridLayout(3, 2, 10, 10));
-        neraca.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-        
-        addLabelValuePair(neraca, "Aset", UI.money(in - out + 3500000));
-        addLabelValuePair(neraca, "Liabilitas", UI.money(0));
-        addLabelValuePair(neraca, "Ekuitas", UI.money(in - out + 3500000));
-        
-        tabs.addTab("Neraca Sederhana", neraca);
+
+        // Polimorfisme: semua laporan diperlakukan sama lewat tipe Laporan.
+        for (Laporan laporan : f.laporan.semua()) {
+            tabs.addTab(laporan.judul(), panelLaporan(laporan));
+        }
+
         add(tabs, BorderLayout.CENTER);
-        
+
         JPanel actions = new JPanel();
         actions.setOpaque(false);
         actions.add(UI.secondaryButton("Ekspor PDF (segera hadir)"));
         actions.add(UI.secondaryButton("Ekspor Excel (segera hadir)"));
         add(actions, BorderLayout.SOUTH);
     }
-    
-    private void addLabelValuePair(JPanel panel, String label, String value) {
+
+    private JPanel panelLaporan(Laporan laporan) {
+        List<Laporan.Baris> baris = laporan.baris();
+
+        JPanel panel = UI.glassPanel();
+        panel.setLayout(new GridLayout(baris.size(), 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+
+        for (Laporan.Baris b : baris) {
+            addLabelValuePair(panel, b.label, UI.money(b.nilai), b.penekanan);
+        }
+        return panel;
+    }
+
+    private void addLabelValuePair(JPanel panel, String label, String value, boolean penekanan) {
         JLabel lbl = new JLabel(label);
         lbl.setForeground(UI.TEXT_LIGHT);
+        if (penekanan) lbl.setFont(new Font(UI.FONT, Font.BOLD, 13));
         panel.add(lbl);
+
         JLabel val = new JLabel(value);
-        val.setForeground(UI.ACCENT);
-        val.setFont(new Font("SansSerif", Font.BOLD, 14));
+        val.setForeground(penekanan ? UI.ACCENT : UI.TEXT_LIGHT);
+        val.setFont(new Font(UI.FONT, Font.BOLD, penekanan ? 15 : 13));
         panel.add(val);
     }
 }

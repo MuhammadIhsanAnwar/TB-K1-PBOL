@@ -14,8 +14,8 @@ public class DashboardPanel extends JPanel {
         header.setFont(new Font("SansSerif", Font.PLAIN, 14));
         add(header, BorderLayout.NORTH);
         
-        double in = f.laporan.pemasukan(f.transaksi);
-        double out = f.laporan.pengeluaran(f.transaksi);
+        double in = f.laporan.pemasukan();
+        double out = f.laporan.pengeluaran();
         
         JPanel cards = new JPanel(new GridLayout(1, 4, 16, 0));
         cards.setOpaque(false);

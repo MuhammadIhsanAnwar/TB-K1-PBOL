@@ -22,8 +22,14 @@ public class WorkspaceData {
         List<Transaksi> result = new ArrayList<>();
         for (TransactionData item : transactions) {
             if (item != null && item.date != null) {
-                result.add(new Transaksi(LocalDate.parse(item.date), item.type,
-                    item.category, item.amount, item.hpp, item.description, item.product));
+                try {
+                    result.add(new Transaksi(LocalDate.parse(item.date), item.type,
+                        item.category, item.amount, item.hpp, item.description, item.product));
+                } catch (ValidasiException | java.time.format.DateTimeParseException ex) {
+                    // Baris rusak dari cloud dilewati supaya satu data lama tidak
+                    // menggagalkan seluruh workspace. Data tetap utuh di Supabase.
+                    System.err.println("Transaksi dilewati (" + item.date + "): " + ex.getMessage());
+                }
             }
         }
         return result;

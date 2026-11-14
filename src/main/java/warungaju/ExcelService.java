@@ -51,8 +51,12 @@ public class ExcelService {
                 if (!produkTerdaftar.isEmpty() && !produkTerdaftar.contains(nama)) {
                     throw new IOException("Produk '" + nama + "' belum terdaftar pada baris " + (r + 1));
                 }
-                result.add(new Transaksi(LocalDate.parse(tanggal), "Pemasukan", "Penjualan",
-                    jumlah * harga, jumlah * hpp, cell(row, 7), nama));
+                try {
+                    result.add(new Transaksi(LocalDate.parse(tanggal), "Pemasukan", "Penjualan",
+                        jumlah * harga, jumlah * hpp, cell(row, 7), nama));
+                } catch (ValidasiException | java.time.format.DateTimeParseException ex) {
+                    throw new IOException("Data tidak valid pada baris " + (r + 1) + ": " + ex.getMessage());
+                }
             }
         }
         return result;

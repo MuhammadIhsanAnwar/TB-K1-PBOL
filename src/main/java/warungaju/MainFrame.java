@@ -20,7 +20,7 @@ public class MainFrame extends JFrame {
     final java.util.List<Produk> produk = new ArrayList<>();
     final Set<String> importedFiles = new HashSet<>();
     boolean actualDataImported;
-    final LaporanKeuangan laporan = new LaporanKeuangan();
+    final LaporanKeuangan laporan = new LaporanKeuangan(transaksi, produk);
     final SupabaseClient supabase;
     final AuthSession session;
     final AppUser user;
