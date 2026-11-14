@@ -8,6 +8,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
+/**
+ * Versi gabungan: logika Supabase milik tim (login, workspace, persistWorkspace,
+ * logout) + tampilan baru (header/sidebar datar, tanpa glow, Segoe UI).
+ */
 public class MainFrame extends JFrame {
     final CardLayout pages = new CardLayout();
     final JPanel pageContainer = new JPanel(pages);
@@ -57,51 +61,21 @@ public class MainFrame extends JFrame {
         pageContainer.removeAll();
         pageContainer.setBackground(UI.BG_DARK);
         navButtons.clear();
-        JPanel root = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics graphics) {
-                super.paintComponent(graphics);
-                Graphics2D g = (Graphics2D) graphics.create();
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setPaint(new RadialGradientPaint(
-                    new Point(getWidth() - 130, 120), 420,
-                    new float[]{0f, 1f},
-                    new Color[]{UI.GLOW_PURPLE, new Color(UI.GLOW_PURPLE.getRed(),
-                        UI.GLOW_PURPLE.getGreen(), UI.GLOW_PURPLE.getBlue(), 0)}
-                ));
-                g.fillOval(getWidth() - 550, -300, 840, 840);
-                g.setPaint(new RadialGradientPaint(
-                    new Point(330, getHeight() - 60), 360,
-                    new float[]{0f, 1f},
-                    new Color[]{UI.GLOW_GREEN, new Color(UI.GLOW_GREEN.getRed(),
-                        UI.GLOW_GREEN.getGreen(), UI.GLOW_GREEN.getBlue(), 0)}
-                ));
-                g.fillOval(-140, getHeight() - 430, 720, 720);
-                Color goldGlow = new Color(UI.PRIMARY_START.getRed(),
-                    UI.PRIMARY_START.getGreen(), UI.PRIMARY_START.getBlue(),
-                    UI.lightMode ? 30 : 24);
-                g.setPaint(new RadialGradientPaint(
-                    new Point(getWidth() / 2, 0), 470,
-                    new float[]{0f, 1f},
-                    new Color[]{goldGlow, new Color(goldGlow.getRed(), goldGlow.getGreen(),
-                        goldGlow.getBlue(), 0)}
-                ));
-                g.fillOval(getWidth() / 2 - 470, -470, 940, 940);
-                g.dispose();
-            }
-        };
+
+        // Latar polos: lingkaran glow di belakang sudah dihapus.
+        JPanel root = new JPanel(new BorderLayout());
         root.setOpaque(true);
         root.setBackground(UI.BG_DARK);
         root.add(header(), BorderLayout.NORTH);
         root.add(sidebar(), BorderLayout.WEST);
-        
+
         content.addPage("Dashboard", new DashboardPanel(this));
         content.addPage("Transaksi", new TransaksiPanel(this));
         content.addPage("Produk dan HPP", new ProdukPanel(this));
         content.addPage("Simulasi Bisnis", new SimulasiPanel(this));
         content.addPage("Prediksi Arus Kas", new ArusKasPanel(this));
         content.addPage("Laporan Keuangan", new LaporanPanel(this));
-        
+
         root.add(content, BorderLayout.CENTER);
         pageContainer.add(new WelcomePanel(this, this::switchTheme), "Welcome");
         pageContainer.add(root, "Application");
@@ -116,45 +90,51 @@ public class MainFrame extends JFrame {
 
     private JPanel header() {
         JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
+        p.setOpaque(true);
+        p.setBackground(UI.GLASS_LIGHT);
         p.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, UI.GLASS_BORDER),
-            BorderFactory.createEmptyBorder(13, 26, 13, 30)
+            BorderFactory.createEmptyBorder(12, 24, 12, 24)
         ));
+
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         brand.setOpaque(false);
-        JLabel mark = new JLabel("W", SwingConstants.CENTER);
-        mark.setPreferredSize(new Dimension(38, 38));
-        mark.setOpaque(true);
-        mark.setBackground(new Color(UI.ACCENT.getRed(), UI.ACCENT.getGreen(), UI.ACCENT.getBlue(), 30));
-        mark.setForeground(UI.ACCENT);
-        mark.setFont(new Font("SansSerif", Font.BOLD, 22));
-        mark.setBorder(BorderFactory.createLineBorder(new Color(UI.ACCENT.getRed(),
-            UI.ACCENT.getGreen(), UI.ACCENT.getBlue(), 110), 1, true));
+        JLabel mark = new JLabel("W", SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UI.ACCENT);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), UI.ARC, UI.ARC);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        mark.setPreferredSize(new Dimension(36, 36));
+        mark.setOpaque(false);
+        mark.setForeground(UI.BUTTON_TEXT);
+        mark.setFont(new Font(UI.FONT, Font.BOLD, 20));
         JPanel name = new JPanel();
         name.setOpaque(false);
         name.setLayout(new BoxLayout(name, BoxLayout.Y_AXIS));
         JLabel title = new JLabel("WARUNGAJU");
-        title.setFont(new Font("SansSerif", Font.BOLD, 18));
-        title.setForeground(UI.ACCENT);
-        JLabel subtitle = new JLabel("FINANCIAL WORKSPACE");
-        subtitle.setFont(new Font("SansSerif", Font.BOLD, 9));
+        title.setFont(new Font(UI.FONT, Font.BOLD, 17));
+        title.setForeground(UI.TEXT_LIGHT);
+        JLabel subtitle = new JLabel("Pembukuan warung");
+        subtitle.setFont(new Font(UI.FONT, Font.PLAIN, 11));
         subtitle.setForeground(UI.TEXT_MUTED);
         name.add(title);
         name.add(subtitle);
         brand.add(mark);
         brand.add(name);
 
-        JPanel account = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel account = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         account.setOpaque(false);
-        JLabel status = new JLabel("●");
-        status.setForeground(new Color(114, 226, 164));
         JLabel accountName = new JLabel((user.fullName == null || user.fullName.trim().isEmpty()
             ? user.email : user.fullName) + "  /  UMKM");
-        accountName.setForeground(UI.TEXT_LIGHT);
+        accountName.setForeground(UI.TEXT_MUTED);
         JButton logout = UI.secondaryButton("Keluar");
         logout.addActionListener(event -> logout());
-        account.add(status);
         account.add(accountName);
         account.add(UI.themeToggle(this::switchTheme));
         account.add(logout);
@@ -165,22 +145,14 @@ public class MainFrame extends JFrame {
 
     private JPanel sidebar() {
         JPanel p = new JPanel();
-        p.setPreferredSize(new Dimension(240, 0));
-        p.setOpaque(false);
-        p.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 0, 1, UI.GLASS_BORDER),
-            BorderFactory.createEmptyBorder(26, 14, 20, 14)
-        ));
+        p.setPreferredSize(new Dimension(230, 0));
+        p.setOpaque(true);
+        p.setBackground(UI.SIDEBAR_BG);
+        p.setBorder(BorderFactory.createEmptyBorder(16, 0, 16, 0));
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        
-        JLabel brand = new JLabel("  YOUR WORKSPACE");
-        brand.setForeground(UI.TEXT_MUTED);
-        brand.setFont(new Font("SansSerif", Font.BOLD, 10));
-        p.add(brand);
-        p.add(Box.createVerticalStrut(18));
-        
+
         String[] menus = {"Dashboard", "Transaksi", "Produk dan HPP", "Simulasi Bisnis", "Prediksi Arus Kas", "Laporan Keuangan"};
-        
+
         for (final String menu : menus) {
             JButton b = UI.navButton(menu);
             b.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -189,9 +161,9 @@ public class MainFrame extends JFrame {
                 showPage(menu);
             });
             navButtons.put(menu, b);
-            setNavActive(b, menu.equals(currentPage));
+            UI.setNavActive(b, menu.equals(currentPage));
             p.add(b);
-            p.add(Box.createVerticalStrut(6));
+            p.add(Box.createVerticalStrut(2));
         }
         return p;
     }
@@ -220,7 +192,7 @@ public class MainFrame extends JFrame {
         pages.show(pageContainer, "Application");
         content.showPage(page);
         for (Map.Entry<String, JButton> entry : navButtons.entrySet()) {
-            setNavActive(entry.getValue(), entry.getKey().equals(page));
+            UI.setNavActive(entry.getValue(), entry.getKey().equals(page));
         }
     }
 
@@ -280,14 +252,6 @@ public class MainFrame extends JFrame {
         }
         dispose();
         new AuthFrame().setVisible(true);
-    }
-
-    private void setNavActive(JButton button, boolean active) {
-        button.putClientProperty("warungaju.active", active);
-        button.setOpaque(active);
-        button.setContentAreaFilled(active);
-        button.setBackground(active ? UI.GLASS_ACTIVE : UI.BG_DARK);
-        button.setForeground(active ? UI.ACCENT : UI.TEXT_LIGHT);
     }
 
     private void switchTheme() {
