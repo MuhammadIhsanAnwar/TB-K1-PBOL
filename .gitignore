@@ -1,0 +1,10 @@
+target/
+*.class
+*.jar
+*.zip
+.idea/
+*.iml
+.vscode/
+supabase/node_modules/
+node_modules/
+package-lock.json
