@@ -66,7 +66,8 @@ begin
     )
     on conflict (id) do update set
         email = excluded.email,
-        nama = excluded.nama,
+        nama = case when existing_user.nama = '' then excluded.nama
+                    else existing_user.nama end,
         last_active_at = coalesce(excluded.last_active_at, existing_user.last_active_at),
         verified_at = excluded.verified_at;
     return new;
@@ -97,7 +98,8 @@ select
 from auth.users
 on conflict (id) do update set
     email = excluded.email,
-    nama = excluded.nama,
+    nama = case when existing_user.nama = '' then excluded.nama
+                else existing_user.nama end,
     last_active_at = coalesce(excluded.last_active_at, existing_user.last_active_at),
     verified_at = excluded.verified_at;
 
@@ -203,3 +205,111 @@ create policy "umkm_workspaces_update_own"
     using (user_id = (select auth.uid()) and (select public.is_active_user()))
     with check (user_id = (select auth.uid()) and (select public.is_active_user()));
 grant select, insert, update on public.umkm_workspaces to authenticated;
+
+-- ---------------------------------------------------------------------
+-- CRUD akun (Update/Delete) lewat RPC. Sama dengan account_crud.sql,
+-- yang dipakai sebagai migrasi untuk database yang sudah berjalan.
+-- ---------------------------------------------------------------------
+
+-- 2. UPDATE: user mengubah nama miliknya sendiri.
+create or replace function public.update_own_profile(p_nama text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    if auth.uid() is null then
+        raise exception 'Tidak terautentikasi.';
+    end if;
+    if p_nama is null or btrim(p_nama) = '' then
+        raise exception 'Nama tidak boleh kosong.';
+    end if;
+    update public.users
+    set nama = btrim(p_nama)
+    where id = auth.uid() and is_active;
+    if not found then
+        raise exception 'Profil tidak ditemukan atau akun nonaktif.';
+    end if;
+end;
+$$;
+
+-- 3. UPDATE (admin): aktifkan / nonaktifkan akun UMKM.
+create or replace function public.admin_set_user_active(p_user_id uuid, p_active boolean)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    if not public.is_super_admin() then
+        raise exception 'Hanya Super Admin yang dapat mengubah status akun.';
+    end if;
+    if p_user_id = auth.uid() then
+        raise exception 'Super Admin tidak dapat mengubah status akunnya sendiri.';
+    end if;
+    update public.users
+    set is_active = p_active
+    where id = p_user_id and role <> 'super_admin';
+    if not found then
+        raise exception 'Pengguna tidak ditemukan atau berstatus Super Admin.';
+    end if;
+end;
+$$;
+
+-- 4. DELETE: user menghapus akunnya sendiri.
+--    Menghapus baris di auth.users; public.users dan umkm_workspaces ikut
+--    terhapus lewat ON DELETE CASCADE.
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    if auth.uid() is null then
+        raise exception 'Tidak terautentikasi.';
+    end if;
+    if public.is_super_admin() then
+        raise exception 'Akun Super Admin tidak dapat dihapus lewat aplikasi.';
+    end if;
+    delete from auth.users where id = auth.uid();
+end;
+$$;
+
+-- 5. DELETE (admin): hapus akun UMKM lain.
+create or replace function public.admin_delete_user(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    if not public.is_super_admin() then
+        raise exception 'Hanya Super Admin yang dapat menghapus akun.';
+    end if;
+    if p_user_id = auth.uid() then
+        raise exception 'Super Admin tidak dapat menghapus akunnya sendiri.';
+    end if;
+    if exists (select 1 from public.users where id = p_user_id and role = 'super_admin') then
+        raise exception 'Akun Super Admin tidak dapat dihapus lewat aplikasi.';
+    end if;
+    delete from auth.users where id = p_user_id;
+    if not found then
+        raise exception 'Pengguna tidak ditemukan.';
+    end if;
+end;
+$$;
+
+-- 6. Hak eksekusi: hanya user yang sudah login. Pemeriksaan role ada di dalam fungsi.
+revoke all on function public.update_own_profile(text) from public, anon;
+revoke all on function public.admin_set_user_active(uuid, boolean) from public, anon;
+revoke all on function public.delete_own_account() from public, anon;
+revoke all on function public.admin_delete_user(uuid) from public, anon;
+grant execute on function public.update_own_profile(text) to authenticated;
+grant execute on function public.admin_set_user_active(uuid, boolean) to authenticated;
+grant execute on function public.delete_own_account() to authenticated;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
+
+-- 7. Muat ulang schema cache PostgREST agar fungsi langsung bisa dipanggil.
+notify pgrst, 'reload schema';

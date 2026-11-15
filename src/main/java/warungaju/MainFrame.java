@@ -135,8 +135,14 @@ public class MainFrame extends JFrame {
         accountName.setForeground(UI.TEXT_MUTED);
         JButton logout = UI.secondaryButton("Keluar");
         logout.addActionListener(event -> logout());
+        JButton accountButton = UI.secondaryButton("Akun");
+        accountButton.addActionListener(event -> new AccountDialog(this, () -> {
+            build();
+            SwingUtilities.updateComponentTreeUI(this);
+        }).setVisible(true));
         account.add(accountName);
         account.add(UI.themeToggle(this::switchTheme));
+        account.add(accountButton);
         account.add(logout);
         p.add(brand, BorderLayout.WEST);
         p.add(account, BorderLayout.EAST);

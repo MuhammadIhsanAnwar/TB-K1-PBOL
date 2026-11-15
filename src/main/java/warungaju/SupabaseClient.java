@@ -94,6 +94,50 @@ public class SupabaseClient {
         return result;
     }
 
+    public List<AppUser> getAllProfiles(AuthSession session) throws IOException {
+        JsonArray users = JsonParser.parseString(send("GET",
+            "/rest/v1/users?select=id,email,nama,role,is_active,last_active_at,created_at,verified_at"
+                + "&order=created_at.desc",
+            null, session)).getAsJsonArray();
+        List<AppUser> result = new ArrayList<>();
+        for (JsonElement user : users) {
+            result.add(appUserFrom(user.getAsJsonObject()));
+        }
+        return result;
+    }
+
+    // --- Update / Delete akun. Semua perubahan lewat fungsi RPC di account_crud.sql ---
+
+    public void updateOwnName(AuthSession session, String fullName) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("p_nama", fullName.trim());
+        send("POST", "/rest/v1/rpc/update_own_profile", GSON.toJson(body), session);
+    }
+
+    public void changePassword(AuthSession session, String newPassword) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("password", newPassword);
+        send("PUT", "/auth/v1/user", GSON.toJson(body), session);
+    }
+
+    public void deleteOwnAccount(AuthSession session) throws IOException {
+        send("POST", "/rest/v1/rpc/delete_own_account", "{}", session);
+    }
+
+    public void setUserActive(AuthSession session, String userId, boolean active)
+            throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("p_user_id", userId);
+        body.addProperty("p_active", active);
+        send("POST", "/rest/v1/rpc/admin_set_user_active", GSON.toJson(body), session);
+    }
+
+    public void deleteUser(AuthSession session, String userId) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("p_user_id", userId);
+        send("POST", "/rest/v1/rpc/admin_delete_user", GSON.toJson(body), session);
+    }
+
     public WorkspaceData loadWorkspace(AuthSession session) throws IOException {
         JsonArray rows = JsonParser.parseString(send("GET",
             "/rest/v1/umkm_workspaces?user_id=eq." + session.userId + "&select=payload",

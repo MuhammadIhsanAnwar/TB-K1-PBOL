@@ -28,6 +28,9 @@ public class AdminFrame extends JFrame {
             }
         };
     private final JButton refreshButton = UI.button("Muat Ulang");
+    private final JButton toggleButton = UI.secondaryButton("Aktifkan / Nonaktifkan");
+    private final JButton deleteButton = UI.secondaryButton("Hapus Akun");
+    private JTable table;
 
     public AdminFrame(SupabaseClient client, AuthSession session, AppUser user) {
         this.client = client;
@@ -44,36 +47,41 @@ public class AdminFrame extends JFrame {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         JLabel title = UI.htmlLabel("<html><h1 style='color:#DFFF00'>Panel Super Admin</h1>"
-            + "<font color='#C8D0FF'>Akun aktif yang terdaftar di WARUNGAJU</font></html>");
+            + "<font color='#C8D0FF'>Semua akun terdaftar di WARUNGAJU</font></html>");
         title.setFont(new Font("SansSerif", Font.PLAIN, 14));
         header.add(title, BorderLayout.WEST);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.add(new JLabel(user.email));
         JButton logout = UI.secondaryButton("Keluar");
+        actions.add(toggleButton);
+        actions.add(deleteButton);
         actions.add(refreshButton);
         actions.add(logout);
         header.add(actions, BorderLayout.EAST);
         root.add(header, BorderLayout.NORTH);
 
-        JTable table = new JTable(model);
+        table = new JTable(model);
+        table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         UI.styleTable(table);
         root.add(UI.scrollPane(table), BorderLayout.CENTER);
         setContentPane(root);
 
         refreshButton.addActionListener(event -> loadUsers());
+        toggleButton.addActionListener(event -> toggleActive());
+        deleteButton.addActionListener(event -> deleteSelectedUser());
         logout.addActionListener(event -> logout());
         loadUsers();
     }
 
     private void loadUsers() {
-        refreshButton.setEnabled(false);
+        setActionsEnabled(false);
         model.setRowCount(0);
         model.addRow(new Object[]{"Memuat data pengguna...", "", "", "", ""});
         new SwingWorker<List<AppUser>, Void>() {
             @Override
             protected List<AppUser> doInBackground() throws Exception {
-                return client.getActiveProfiles(session);
+                return client.getAllProfiles(session);
             }
 
             @Override
@@ -87,7 +95,7 @@ public class AdminFrame extends JFrame {
                             user.createdAt, user.verifiedAt});
                     }
                     if (users.isEmpty()) {
-                        model.addRow(new Object[]{"Belum ada pengguna aktif.", "", "", "", "", "", "", ""});
+                        model.addRow(new Object[]{"Belum ada pengguna.", "", "", "", "", "", "", ""});
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -95,8 +103,95 @@ public class AdminFrame extends JFrame {
                 } catch (ExecutionException ex) {
                     showError(ex.getCause());
                 } finally {
-                    refreshButton.setEnabled(true);
+                    setActionsEnabled(true);
                 }
+            }
+        }.execute();
+    }
+
+    private interface IoAction {
+        void run() throws java.io.IOException;
+    }
+
+    private void setActionsEnabled(boolean enabled) {
+        refreshButton.setEnabled(enabled);
+        toggleButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
+    }
+
+    /** Mengembalikan {id, email, role, status} baris terpilih, atau null bila tidak valid. */
+    private String[] selectedUser() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Pilih satu akun pada tabel terlebih dahulu.");
+            return null;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        String id = String.valueOf(model.getValueAt(modelRow, 0));
+        try {
+            java.util.UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Baris yang dipilih bukan data akun.");
+            return null;
+        }
+        return new String[]{id, String.valueOf(model.getValueAt(modelRow, 1)),
+            String.valueOf(model.getValueAt(modelRow, 3)),
+            String.valueOf(model.getValueAt(modelRow, 4))};
+    }
+
+    private void toggleActive() {
+        final String[] selected = selectedUser();
+        if (selected == null) return;
+        if ("super_admin".equals(selected[2])) {
+            JOptionPane.showMessageDialog(this, "Akun Super Admin tidak dapat diubah dari panel ini.");
+            return;
+        }
+        final boolean activate = "Nonaktif".equals(selected[3]);
+        int answer = JOptionPane.showConfirmDialog(this,
+            (activate ? "Aktifkan kembali akun " : "Nonaktifkan akun ") + selected[1] + "?",
+            "Konfirmasi", JOptionPane.YES_NO_OPTION);
+        if (answer != JOptionPane.YES_OPTION) return;
+        runAction(() -> client.setUserActive(session, selected[0], activate));
+    }
+
+    private void deleteSelectedUser() {
+        final String[] selected = selectedUser();
+        if (selected == null) return;
+        if ("super_admin".equals(selected[2])) {
+            JOptionPane.showMessageDialog(this, "Akun Super Admin tidak dapat dihapus dari panel ini.");
+            return;
+        }
+        int answer = JOptionPane.showConfirmDialog(this,
+            "Hapus PERMANEN akun " + selected[1] + " beserta seluruh data keuangannya?\n"
+                + "Tindakan ini tidak dapat dibatalkan.",
+            "Hapus akun", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (answer != JOptionPane.YES_OPTION) return;
+        runAction(() -> client.deleteUser(session, selected[0]));
+    }
+
+    private void runAction(final IoAction action) {
+        setActionsEnabled(false);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                action.run();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException ex) {
+                    Throwable cause = ex.getCause();
+                    JOptionPane.showMessageDialog(AdminFrame.this,
+                        cause == null || cause.getMessage() == null
+                            ? "Aksi gagal." : cause.getMessage(),
+                        "Aksi gagal", JOptionPane.ERROR_MESSAGE);
+                }
+                loadUsers();
             }
         }.execute();
     }
