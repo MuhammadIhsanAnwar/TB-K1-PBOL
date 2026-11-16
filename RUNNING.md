@@ -111,10 +111,16 @@ Aplikasi dimulai dengan data contoh. Tambahkan produk terlebih dahulu sebelum me
 
 ## Supabase dan akun online
 
-Aplikasi memakai Supabase Auth untuk pendaftaran/login dan menyimpan data kerja
-UMKM di cloud. URL dan publishable key proyek sudah dikonfigurasi sebagai nilai
-default yang aman untuk aplikasi klien. Anda dapat menggantinya melalui
-environment variable `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`.
+Aplikasi memakai Supabase Auth untuk pendaftaran/login. Operasi database
+dijalankan oleh layanan backend Java melalui PostgreSQL JDBC; aplikasi desktop
+mengirim access token ke backend, dan backend memvalidasinya ke Supabase Auth
+sebelum menjalankan transaksi dengan hak `authenticated` agar kebijakan RLS
+tetap berlaku. Driver PostgreSQL JDBC dikelola Maven dari `pom.xml`.
+
+URL Supabase dan publishable key dapat diatur melalui `SUPABASE_URL` dan
+`SUPABASE_PUBLISHABLE_KEY`. Aplikasi desktop memakai backend lokal
+`http://127.0.0.1:8081` secara default; untuk backend yang telah di-deploy,
+atur `WARUNGAJU_API_URL` ke URL HTTPS layanan tersebut.
 
 Sebelum aplikasi digunakan:
 
@@ -122,9 +128,36 @@ Sebelum aplikasi digunakan:
    isinya melalui **Supabase Dashboard → SQL Editor**. Ini membuat tabel
    `public.users`, role, tabel workspace, sinkronisasi tanggal aktivitas dan
    verifikasi, serta kebijakan Row Level Security.
-2. Jalankan aplikasi dan daftarkan akun. Pendaftaran dari aplikasi selalu
+2. Dari dashboard Supabase, ambil connection string PostgreSQL dan kredensial
+   database untuk server tepercaya. Simpan hanya pada environment server, bukan
+   pada komputer klien atau repository. Untuk Supavisor transaction pooler,
+   gunakan URL seperti berikut dan sesuaikan host, project ref, serta password:
+
+   ```text
+   jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0
+   ```
+
+   Di PowerShell, atur variabel untuk proses backend (password dimasukkan
+   secara tersembunyi):
+
+   ```powershell
+   $env:WARUNGAJU_DB_URL = "jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0"
+   $env:WARUNGAJU_DB_USER = "postgres.<project-ref>"
+   $securePassword = Read-Host "Supabase database password" -AsSecureString
+   $env:WARUNGAJU_DB_PASSWORD = [Net.NetworkCredential]::new("", $securePassword).Password
+   $env:WARUNGAJU_API_BIND = "127.0.0.1"
+   mvn exec:java "-Dexec.mainClass=warungaju.SupabaseJdbcServer"
+   ```
+
+   Backend harus dijalankan pada server tepercaya. Jika diakses dari internet,
+   pasang reverse proxy HTTPS dan firewall; jangan mengekspos listener HTTP
+   langsung. Password database tidak boleh dibundel bersama aplikasi desktop.
+3. Jalankan aplikasi desktop di terminal lain dengan `mvn exec:java`. Jika
+   backend berjalan pada host lain, atur `WARUNGAJU_API_URL` ke alamat HTTPS
+   backend sebelum menjalankan aplikasi.
+4. Daftarkan akun. Pendaftaran dari aplikasi selalu
    membuat role `umkm`; verifikasi email bila Supabase memintanya.
-3. Buat akun `warungaju@neoverse.my.id` di **Supabase Dashboard →
+5. Buat akun `warungaju@neoverse.my.id` di **Supabase Dashboard →
    Authentication → Users** (atau daftar lewat aplikasi), tetapkan password di
    Supabase Auth, lalu verifikasi emailnya. SQL tidak membuat akun Auth ataupun
    menyimpan password. Setelah akun terverifikasi, jalankan blok promosi Super
@@ -152,7 +185,7 @@ Sebelum aplikasi digunakan:
    $$;
    ```
 
-4. Masuk kembali dengan akun tersebut untuk membuka panel Super Admin. Panel
+6. Masuk kembali dengan akun tersebut untuk membuka panel Super Admin. Panel
    hanya menampilkan profil dengan `is_active = true`. Akun UMKM masuk ke
    dashboard UMKM.
 
