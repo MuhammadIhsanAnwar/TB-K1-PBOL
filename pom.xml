@@ -7,6 +7,9 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Class utama default: aplikasi desktop. Bisa ditimpa dari command line
+             dengan -Dexec.mainClass=... atau lewat profil -Pbackend. -->
+        <exec.mainClass>warungaju.Main</exec.mainClass>
     </properties>
     <dependencies>
         <dependency>
@@ -36,8 +39,19 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
-                <configuration><mainClass>warungaju.Main</mainClass></configuration>
+                <!-- Tidak ada <configuration> di sini. Kalau mainClass ditulis di
+                     sini, nilai itu mengalahkan -Dexec.mainClass dari command line.
+                     Nilai default diambil dari properti exec.mainClass di atas. -->
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <!-- mvn exec:java -Pbackend  -> menjalankan server JDBC lokal -->
+        <profile>
+            <id>backend</id>
+            <properties>
+                <exec.mainClass>warungaju.SupabaseJdbcServer</exec.mainClass>
+            </properties>
+        </profile>
+    </profiles>
 </project>

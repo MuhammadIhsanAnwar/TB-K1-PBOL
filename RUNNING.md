@@ -109,6 +109,48 @@ Aplikasi dimulai dengan data contoh. Tambahkan produk terlebih dahulu sebelum me
 - `SimulasiBisnis`, `PrediksiArusKas`, dan `LaporanKeuangan` menangani perhitungan.
 - `ExcelService` membuat template dan mengimpor data menggunakan Apache POI.
 
+## Cara cepat menjalankan di Windows
+
+Cara paling mudah, tanpa mengetik perintah:
+
+1. Buat file `.env` di folder proyek (sudah diabaikan git), berisi:
+
+   ```text
+   WARUNGAJU_DB_URL=jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0
+   WARUNGAJU_DB_USER=postgres.<project-ref>
+   WARUNGAJU_DB_PASSWORD=<password-database>
+   WARUNGAJU_API_BIND=127.0.0.1
+   ```
+
+2. Double-click `1-jalankan-backend.bat`. Tunggu sampai muncul baris:
+
+   ```text
+   WARUNGAJU JDBC API listening on 127.0.0.1:8081
+   ```
+
+   Biarkan jendela ini terbuka. Jangan ditutup selama aplikasi dipakai.
+3. Double-click `2-jalankan-aplikasi.bat` di jendela lain. Jendela login muncul.
+
+Jika login gagal dengan pesan `Connection refused: getsockopt`, artinya backend
+belum jalan atau sudah tertutup. Ulangi langkah 2.
+
+## Menjalankan lewat Maven
+
+Dua proses, dua terminal:
+
+```powershell
+# Terminal 1 - backend database
+mvn exec:java -Pbackend
+
+# Terminal 2 - aplikasi desktop
+mvn exec:java
+```
+
+Profil `-Pbackend` menggantikan perintah lama
+`mvn exec:java "-Dexec.mainClass=warungaju.SupabaseJdbcServer"`. Perintah lama
+tidak berfungsi karena `exec-maven-plugin` di `pom.xml` versi sebelumnya
+mengunci class utama ke `warungaju.Main`.
+
 ## Supabase dan akun online
 
 Aplikasi memakai Supabase Auth untuk pendaftaran/login. Operasi database
@@ -137,6 +179,11 @@ Sebelum aplikasi digunakan:
    jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0
    ```
 
+   Gunakan port **6543** (transaction pooler). Jika muncul error seperti
+   `remaining connection slots are reserved` atau pooler menolak koneksi, coba
+   port **5432** (direct connection) dengan host dan user yang sama. Port 5432
+   lebih cepat kehabisan slot koneksi, jadi pakai hanya sebagai cadangan.
+
    Di PowerShell, atur variabel untuk proses backend (password dimasukkan
    secara tersembunyi):
 
@@ -146,7 +193,7 @@ Sebelum aplikasi digunakan:
    $securePassword = Read-Host "Supabase database password" -AsSecureString
    $env:WARUNGAJU_DB_PASSWORD = [Net.NetworkCredential]::new("", $securePassword).Password
    $env:WARUNGAJU_API_BIND = "127.0.0.1"
-   mvn exec:java "-Dexec.mainClass=warungaju.SupabaseJdbcServer"
+   mvn exec:java -Pbackend
    ```
 
    Backend harus dijalankan pada server tepercaya. Jika diakses dari internet,
