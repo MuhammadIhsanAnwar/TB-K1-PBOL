@@ -3,15 +3,18 @@ REM ============================================================
 REM  WARUNGAJU - jalankan backend database (SupabaseJdbcServer)
 REM  Buka terminal INI DULU, biarkan terbuka.
 REM
-REM  Kredensial database dibaca dari file .env (lihat .env.example).
+REM  Kredensial database dibaca dari file .env atau env (lihat .env.example).
 REM  Jangan pernah commit .env ke git.
 REM ============================================================
 setlocal
 cd /d "%~dp0"
 
-if not exist ".env" (
+set "ENV_FILE=.env"
+if not exist "%ENV_FILE%" set "ENV_FILE=env"
+
+if not exist "%ENV_FILE%" (
     echo.
-    echo  File .env belum ada. Buat file .env di folder ini berisi:
+    echo  File .env atau env belum ada. Buat salah satunya di folder ini berisi:
     echo.
     echo    WARUNGAJU_DB_URL=jdbc:postgresql://HOST:PORT/postgres?sslmode=require^&prepareThreshold=0
     echo    WARUNGAJU_DB_USER=postgres.PROJECT_REF
@@ -22,8 +25,8 @@ if not exist ".env" (
     exit /b 1
 )
 
-REM Muat isi .env baris per baris (format: NAMA=nilai).
-for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+REM Muat isi file konfigurasi baris per baris (format: NAMA=nilai).
+for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ENV_FILE%") do (
     if not "%%A"=="" set "%%A=%%B"
 )
 

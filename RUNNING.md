@@ -113,7 +113,9 @@ Aplikasi dimulai dengan data contoh. Tambahkan produk terlebih dahulu sebelum me
 
 Cara paling mudah, tanpa mengetik perintah:
 
-1. Buat file `.env` di folder proyek (sudah diabaikan git), berisi:
+1. Buat file `.env` di folder proyek (sudah diabaikan git), berisi. Jika file
+   konfigurasi yang sudah ada bernama `env` tanpa titik, skrip backend juga
+   akan membacanya sebagai fallback:
 
    ```text
    WARUNGAJU_DB_URL=jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0
