@@ -38,9 +38,15 @@ public class WorkspaceData {
     public List<Produk> toProducts() {
         List<Produk> result = new ArrayList<>();
         for (ProductData item : products) {
-            if (item != null) {
+            if (item == null) {
+                continue;
+            }
+            try {
                 result.add(new Produk(item.name, item.productionCost, item.sellingPrice,
                     item.stock, item.productionQuantity));
+            } catch (ValidasiException ex) {
+                // Data lama yang tidak valid tidak boleh menggagalkan seluruh workspace.
+                System.err.println("Produk dilewati (" + item.name + "): " + ex.getMessage());
             }
         }
         return result;

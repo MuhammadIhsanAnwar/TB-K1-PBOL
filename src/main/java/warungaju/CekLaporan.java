@@ -49,6 +49,16 @@ public class CekLaporan {
         cekDitolak("hpp negatif", () ->
             new Transaksi(LocalDate.now(), "Pemasukan", "Penjualan", 1000, -1, "salah", "A"));
 
+        // Pembagian dengan nol dijaga di constructor, jadi getHpp()/getMargin() aman.
+        cekDitolak("harga jual nol", () -> new Produk("B", 400, 0, 5, 10));
+        cekDitolak("harga jual negatif", () -> new Produk("B", 400, -1000, 5, 10));
+        cekDitolak("jumlah produksi nol", () -> new Produk("B", 400, 1000, 5, 0));
+        cekDitolak("jumlah produksi negatif", () -> new Produk("B", 400, 1000, 5, -2));
+
+        Produk p = new Produk("B", 4000, 1000, 5, 4);
+        cek("hpp per unit", 1000, p.getHpp());
+        cek("margin persen", 0, p.getMargin());
+
         System.out.println("Semua cek laporan lolos.");
     }
 
