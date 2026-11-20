@@ -4,8 +4,7 @@ import java.awt.*;
 import javax.swing.*;
 
 public class SimulasiPanel extends JPanel {
-    final SimulasiBisnis service = new SimulasiBisnis();
-    final JLabel result = UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Belum ada simulasi</h2><p style='color:#C8D0FF'>Pilih variabel lalu tekan Simulasikan.</p></html>");
+    final JLabel result = UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Belum ada simulasi</h2><p style='color:#C8D0FF'>Atur asumsi usaha, lalu hitung perkiraan laba.</p></html>");
 
     public SimulasiPanel(MainFrame f) {
         setLayout(new BorderLayout(15, 15));
@@ -13,7 +12,7 @@ public class SimulasiPanel extends JPanel {
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
         
-        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Simulasi Bisnis</h1><font color='#C8D0FF'>Uji perubahan strategi sebelum diterapkan di usaha</font></html>"), BorderLayout.NORTH);
+        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Simulasi Bisnis</h1><font color='#C8D0FF'>Ukur dampak biaya, kapasitas, dan harga terhadap laba usaha.</font></html>"), BorderLayout.NORTH);
         
         JPanel form = UI.formGrid();
         GridBagConstraints g = new GridBagConstraints();
@@ -39,7 +38,7 @@ public class SimulasiPanel extends JPanel {
         
         JPanel box = UI.glassPanel();
         box.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
-        box.add(UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Input variabel</h2><p style='color:#C8D0FF'>Data contoh aktif. Ganti nilai untuk mencoba skenario.</p></html>"), BorderLayout.NORTH);
+        box.add(UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Asumsi usaha</h2><p style='color:#C8D0FF'>Sesuaikan nilai dengan rencana produksi dan penjualan Anda.</p></html>"), BorderLayout.NORTH);
         box.add(form, BorderLayout.CENTER);
         
         JPanel output = UI.glassPanel();
@@ -57,14 +56,17 @@ public class SimulasiPanel extends JPanel {
         
         run.addActionListener(e -> {
             try {
-                SimulasiBisnis.Result r = service.hitung(
-                    Double.parseDouble(bahan.getText()),
-                    Integer.parseInt(karyawan.getText()),
-                    Double.parseDouble(gaji.getText()),
-                    Double.parseDouble(jam.getText()),
-                    Double.parseDouble(target.getText()),
-                    Double.parseDouble(harga.getText())
-                );
+                double hargaBahan = Double.parseDouble(bahan.getText());
+                int jumlahKaryawan = Integer.parseInt(karyawan.getText());
+                double gajiKaryawan = Double.parseDouble(gaji.getText());
+                double jamOperasional = Double.parseDouble(jam.getText());
+                double targetPenjualan = Double.parseDouble(target.getText());
+                double hargaJual = Double.parseDouble(harga.getText());
+                SimulasiBisnis service = new SimulasiBisnis(hargaBahan, jumlahKaryawan,
+                    gajiKaryawan, jamOperasional, targetPenjualan, hargaJual);
+                Perhitungan perhitungan = service;
+                double labaBersih = perhitungan.hitung();
+                SimulasiBisnis.Result r = service.getHasilTerakhir();
                 saved.ingredientPrice = Double.parseDouble(bahan.getText());
                 saved.employeeCount = Integer.parseInt(karyawan.getText());
                 saved.salaryPerEmployee = Double.parseDouble(gaji.getText());
@@ -72,7 +74,11 @@ public class SimulasiPanel extends JPanel {
                 saved.monthlySalesTarget = Double.parseDouble(target.getText());
                 saved.sellingPrice = Double.parseDouble(harga.getText());
                 f.persistWorkspace();
-                result.setText(UI.html("<html><h2 style='color:#DFFF00'>" + UI.money(r.laba) + "</h2><p style='color:#FFFFF0'>Pendapatan: " + UI.money(r.pendapatan) + "<br>HPP: " + UI.money(r.hpp) + "<br>Operasional: " + UI.money(r.operasional) + "<br>Margin: " + String.format("%.1f%%", r.margin) + "</p></html>"));
+                result.setText(UI.html("<html><h2 style='color:#DFFF00'>" + perhitungan.label()
+                    + ": " + UI.money(labaBersih) + "</h2><p style='color:#FFFFF0'>Pendapatan: "
+                    + UI.money(r.pendapatan) + "<br>HPP: " + UI.money(r.hpp)
+                    + "<br>Operasional: " + UI.money(r.operasional) + "<br>Margin: "
+                    + String.format("%.1f%%", r.margin) + "</p></html>"));
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Semua variabel harus berupa angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
             }

@@ -13,14 +13,13 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
- * Pusat styling aplikasi. Tema finansial korporat: navy/charcoal + aksen emerald dan emas,
- * permukaan datar (tanpa gradient, tanpa glow), sudut kecil, garis tipis.
+ * Pusat styling aplikasi dengan palet cokelat, krem, dan permukaan hangat.
  *
  * Nama field lama (BG_DARK, GLASS_*, PURPLE_TEXT, dst.) sengaja dipertahankan
  * supaya panel lain yang belum diubah tetap bisa dikompilasi.
  */
 class UI {
-    static final String FONT = "Segoe UI";
+    static final String FONT = "Aptos";
     /** Radius sudut (px). ARC = diameter busur yang dipakai Graphics2D dan FlatLaf. */
     static final int RADIUS = 10;
     static final int ARC = RADIUS * 2;
@@ -65,49 +64,49 @@ class UI {
 
     static void initTheme() {
         if (lightMode) {
-            BG_DARK = new Color(241, 244, 248);
-            GLASS_LIGHT = new Color(255, 255, 255);
-            GLASS_BORDER = new Color(214, 220, 229);
-            GLASS_ACTIVE = new Color(226, 236, 240);
-            TEXT_LIGHT = new Color(20, 33, 52);
-            TEXT_MUTED = new Color(95, 108, 128);
-            ACCENT = new Color(0, 128, 110);
-            ACCENT_HOVER = new Color(0, 150, 128);
-            PURPLE_TEXT = new Color(176, 132, 24);
-            SIDEBAR_BG = new Color(15, 27, 45);
-            SIDEBAR_HOVER = new Color(24, 40, 64);
-            SIDEBAR_ACTIVE = new Color(30, 50, 80);
-            SIDEBAR_TEXT = new Color(190, 203, 222);
-            SIDEBAR_ACTIVE_TEXT = new Color(255, 255, 255);
+            BG_DARK = new Color(246, 240, 230);
+            GLASS_LIGHT = new Color(255, 250, 241);
+            GLASS_BORDER = new Color(222, 209, 190);
+            GLASS_ACTIVE = new Color(235, 222, 203);
+            TEXT_LIGHT = new Color(55, 40, 30);
+            TEXT_MUTED = new Color(119, 99, 79);
+            ACCENT = new Color(112, 73, 48);
+            ACCENT_HOVER = new Color(137, 91, 60);
+            PURPLE_TEXT = new Color(153, 111, 63);
+            SIDEBAR_BG = new Color(59, 42, 31);
+            SIDEBAR_HOVER = new Color(75, 54, 40);
+            SIDEBAR_ACTIVE = new Color(94, 66, 47);
+            SIDEBAR_TEXT = new Color(226, 211, 190);
+            SIDEBAR_ACTIVE_TEXT = new Color(255, 250, 241);
             BUTTON_TEXT = Color.WHITE;
-            INPUT_BG = Color.WHITE;
-            ROW_ALT = new Color(247, 249, 252);
-            HEADER_BG = new Color(226, 232, 240);
-            GREEN = new Color(16, 138, 92);
-            RED = new Color(200, 60, 60);
-            AMBER = new Color(176, 132, 24);
+            INPUT_BG = new Color(255, 252, 246);
+            ROW_ALT = new Color(248, 242, 232);
+            HEADER_BG = new Color(238, 227, 210);
+            GREEN = new Color(79, 111, 72);
+            RED = new Color(164, 77, 61);
+            AMBER = new Color(153, 111, 63);
         } else {
-            BG_DARK = new Color(14, 22, 36);
-            GLASS_LIGHT = new Color(22, 34, 54);
-            GLASS_BORDER = new Color(44, 62, 90);
-            GLASS_ACTIVE = new Color(32, 50, 78);
-            TEXT_LIGHT = new Color(232, 238, 247);
-            TEXT_MUTED = new Color(150, 165, 188);
-            ACCENT = new Color(0xB15B5D);
-            ACCENT_HOVER = new Color(0xC97476);
-            PURPLE_TEXT = new Color(222, 184, 90);
-            SIDEBAR_BG = new Color(9, 16, 28);
-            SIDEBAR_HOVER = new Color(17, 28, 46);
-            SIDEBAR_ACTIVE = new Color(26, 42, 66);
-            SIDEBAR_TEXT = new Color(160, 176, 200);
-            SIDEBAR_ACTIVE_TEXT = new Color(255, 255, 255);
+            BG_DARK = new Color(43, 32, 25);
+            GLASS_LIGHT = new Color(56, 42, 33);
+            GLASS_BORDER = new Color(91, 68, 51);
+            GLASS_ACTIVE = new Color(75, 55, 42);
+            TEXT_LIGHT = new Color(244, 233, 216);
+            TEXT_MUTED = new Color(199, 179, 155);
+            ACCENT = new Color(198, 151, 103);
+            ACCENT_HOVER = new Color(216, 173, 125);
+            PURPLE_TEXT = new Color(216, 173, 125);
+            SIDEBAR_BG = new Color(35, 25, 19);
+            SIDEBAR_HOVER = new Color(54, 39, 29);
+            SIDEBAR_ACTIVE = new Color(75, 53, 38);
+            SIDEBAR_TEXT = new Color(211, 193, 169);
+            SIDEBAR_ACTIVE_TEXT = new Color(255, 246, 230);
             BUTTON_TEXT = Color.WHITE;
-            INPUT_BG = new Color(28, 42, 66);
-            ROW_ALT = new Color(26, 39, 60);
-            HEADER_BG = new Color(34, 52, 80);
-            GREEN = new Color(72, 200, 140);
-            RED = new Color(240, 110, 110);
-            AMBER = new Color(226, 178, 70);
+            INPUT_BG = new Color(64, 47, 35);
+            ROW_ALT = new Color(50, 38, 30);
+            HEADER_BG = new Color(66, 49, 37);
+            GREEN = new Color(145, 174, 123);
+            RED = new Color(221, 130, 109);
+            AMBER = new Color(216, 173, 125);
         }
         // Sisa nama lama: semuanya warna solid, tidak ada gradient lagi.
         GLASS_TOP = GLASS_LIGHT;
@@ -547,13 +546,36 @@ class UI {
         JPanel p = glassPanel();
         p.setLayout(new BorderLayout(10, 0));
         p.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 4));
-        JLabel icon = new JLabel("Cari");
-        icon.setFont(new Font(FONT, Font.BOLD, 12));
+        JLabel icon = new JLabel(new SearchIcon());
+        icon.setPreferredSize(new Dimension(18, 18));
         icon.setForeground(TEXT_MUTED);
         search.putClientProperty("JTextField.placeholderText", hint);
         p.add(icon, BorderLayout.WEST);
         p.add(search, BorderLayout.CENTER);
         return p;
+    }
+
+    private static class SearchIcon implements Icon {
+        @Override
+        public int getIconWidth() {
+            return 15;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 15;
+        }
+
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(TEXT_MUTED);
+            g2.setStroke(new BasicStroke(1.7f));
+            g2.drawOval(x + 1, y + 1, 8, 8);
+            g2.drawLine(x + 9, y + 9, x + 13, y + 13);
+            g2.dispose();
+        }
     }
 
     static class StripeRenderer extends DefaultTableCellRenderer {

@@ -6,4 +6,5 @@ public class AuthSession {
     public long expiresAt;
     public String userId;
     public String email;
+    public boolean emailVerified;
 }

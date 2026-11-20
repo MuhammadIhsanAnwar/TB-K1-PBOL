@@ -48,7 +48,7 @@ public class AdminFrame extends JFrame {
         header.setOpaque(false);
         JLabel title = UI.htmlLabel("<html><h1 style='color:#DFFF00'>Panel Super Admin</h1>"
             + "<font color='#C8D0FF'>Semua akun terdaftar di WARUNGAJU</font></html>");
-        title.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        title.setFont(new Font(UI.FONT, Font.PLAIN, 14));
         header.add(title, BorderLayout.WEST);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);

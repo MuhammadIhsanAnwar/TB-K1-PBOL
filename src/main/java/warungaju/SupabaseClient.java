@@ -44,8 +44,12 @@ public class SupabaseClient {
         JsonObject body = new JsonObject();
         body.addProperty("email", email.trim());
         body.addProperty("password", password);
-        return sessionFrom(send("POST", "/auth/v1/token?grant_type=password",
+        AuthSession session = sessionFrom(send("POST", "/auth/v1/token?grant_type=password",
             GSON.toJson(body), null));
+        if (!session.emailVerified) {
+            throw new IOException("Verifikasi email terlebih dahulu sebelum masuk.");
+        }
+        return session;
     }
 
     public AuthSession signUp(String fullName, String email, String password) throws IOException {
@@ -67,9 +71,26 @@ public class SupabaseClient {
                 ex);
         }
         JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-        return json.has("access_token") && !json.get("access_token").isJsonNull()
+        if (json.has("access_token") && !json.get("access_token").isJsonNull()
             && !json.get("access_token").getAsString().trim().isEmpty()
-            ? sessionFrom(response) : null;
+        ) {
+            AuthSession session = sessionFrom(response);
+            return session.emailVerified ? session : null;
+        }
+        return null;
+    }
+
+    public void sendPasswordReset(String email) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("email", email.trim());
+        send("POST", "/auth/v1/recover", GSON.toJson(body), null);
+    }
+
+    public void resendSignupVerification(String email) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("type", "signup");
+        body.addProperty("email", email.trim());
+        send("POST", "/auth/v1/resend", GSON.toJson(body), null);
     }
 
     public void signOut(AuthSession session) throws IOException {
@@ -150,6 +171,7 @@ public class SupabaseClient {
         session.refreshToken = stringValue(json, "refresh_token");
         session.userId = stringValue(user, "id");
         session.email = stringValue(user, "email");
+        session.emailVerified = stringValue(user, "email_confirmed_at") != null;
         long lifetime = json.has("expires_in") ? json.get("expires_in").getAsLong() : 3600;
         session.expiresAt = System.currentTimeMillis() + lifetime * 1000L;
         if (session.accessToken == null || session.userId == null) {

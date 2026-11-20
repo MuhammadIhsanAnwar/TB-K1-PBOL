@@ -7,7 +7,7 @@ package warungaju;
  * class ini, sehingga object Produk tidak mungkin berada dalam keadaan
  * tidak valid (nama kosong, harga negatif, stok negatif, dan sebagainya).
  */
-public class Produk {
+public class Produk implements Perhitungan {
 
     private String nama;
     private double biayaProduksi;
@@ -62,15 +62,29 @@ public class Produk {
 
     // HPP per unit = total biaya produksi / jumlah unit yang diproduksi
     public double getHpp() {
-
+        if (jumlahProduksi <= 0) {
+            throw new IllegalStateException("Jumlah produksi harus lebih dari 0.");
+        }
         return biayaProduksi / jumlahProduksi;
     }
 
 
     // Margin dalam persen terhadap harga jual
     public double getMargin() {
-
+        if (hargaJual <= 0) {
+            throw new IllegalStateException("Harga jual harus lebih dari 0.");
+        }
         return (hargaJual - getHpp()) / hargaJual * 100;
+    }
+
+    @Override
+    public double hitung() {
+        return getHpp();
+    }
+
+    @Override
+    public String label() {
+        return "HPP per unit";
     }
 
 

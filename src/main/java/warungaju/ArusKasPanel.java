@@ -11,7 +11,7 @@ public class ArusKasPanel extends JPanel {
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
         
-        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Prediksi Arus Kas</h1><font color='#C8D0FF'>Proyeksi saldo berdasarkan tren data contoh</font></html>"), BorderLayout.NORTH);
+        add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Prediksi Arus Kas</h1><font color='#C8D0FF'>Perkirakan posisi kas dari asumsi pemasukan dan pengeluaran.</font></html>"), BorderLayout.NORTH);
         
         JPanel input = UI.glassPanel();
         input.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -38,10 +38,14 @@ public class ArusKasPanel extends JPanel {
         JTable table = new JTable(m);
         UI.styleTable(table);
         
+        JLabel saldoAkhir = new JLabel("Saldo akhir: -");
+        saldoAkhir.setForeground(UI.TEXT_LIGHT);
+
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setOpaque(false);
         body.add(input, BorderLayout.NORTH);
         body.add(UI.scrollPane(table), BorderLayout.CENTER);
+        body.add(saldoAkhir, BorderLayout.SOUTH);
         add(body, BorderLayout.CENTER);
         
         run.addActionListener(e -> {
@@ -50,9 +54,14 @@ public class ArusKasPanel extends JPanel {
                 saved.startingBalance = Double.parseDouble(saldo.getText());
                 saved.monthlyIncome = Double.parseDouble(in.getText());
                 saved.monthlyExpenses = Double.parseDouble(out.getText());
-                for (PrediksiArusKas.Month x : new PrediksiArusKas().prediksi(saved.startingBalance, saved.monthlyIncome, saved.monthlyExpenses, 6)) {
+                PrediksiArusKas service = new PrediksiArusKas(saved.startingBalance,
+                    saved.monthlyIncome, saved.monthlyExpenses, 6);
+                Perhitungan perhitungan = service;
+                double nilaiAkhir = perhitungan.hitung();
+                for (PrediksiArusKas.Month x : service.prediksi()) {
                     m.addRow(new Object[]{x.nama, UI.money(x.pemasukan), UI.money(x.pengeluaran), UI.money(x.saldo), x.saldo < 0 ? "DEFISIT" : "Aman"});
                 }
+                saldoAkhir.setText(perhitungan.label() + ": " + UI.money(nilaiAkhir));
                 f.persistWorkspace();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Input harus angka.", "Validasi", JOptionPane.WARNING_MESSAGE);
