@@ -29,6 +29,7 @@ warungaju\TransaksiPanel$1.class
 warungaju\StartupFrame$1.class
 warungaju\WorkspaceData$SimulationSettings.class
 warungaju\UI$SolidButton.class
+warungaju\AuthFrame$ScrollRoot.class
 warungaju\LaporanLabaRugi.class
 warungaju\MainFrame$1.class
 warungaju\Laporan.class
@@ -70,6 +71,7 @@ warungaju\SupabaseClient$ConnectionCheck.class
 warungaju\Main.class
 warungaju\AdminFrame$IoAction.class
 warungaju\Produk.class
+warungaju\UI$6.class
 warungaju\WorkspaceData$ProductData.class
 warungaju\AdminFrame$2.class
 warungaju\ExcelService.class

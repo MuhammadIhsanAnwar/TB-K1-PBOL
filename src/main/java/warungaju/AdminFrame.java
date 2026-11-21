@@ -69,6 +69,7 @@ public class AdminFrame extends JFrame {
         this.client = client;
         this.session = session;
         setTitle("Warung Aju - Super Admin");
+        setIconImages(UI.windowIcons());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setSize(1240, 780);
         setMinimumSize(new java.awt.Dimension(1080, 660));
@@ -83,7 +84,11 @@ public class AdminFrame extends JFrame {
         JLabel title = UI.htmlLabel("<html><h1 style='color:#DFFF00'>Panel Super Admin</h1>"
             + "<font color='#C8D0FF'>Semua akun terdaftar di Warung Aju</font></html>");
         title.setFont(new Font(UI.FONT, Font.PLAIN, 14));
-        header.add(title, BorderLayout.WEST);
+        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 0));
+        brand.setOpaque(false);
+        brand.add(new JLabel(UI.markIcon(56)));
+        brand.add(title);
+        header.add(brand, BorderLayout.WEST);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.add(new JLabel(user.email));

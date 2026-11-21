@@ -1,10 +1,15 @@
 package warungaju;
 
+import java.awt.image.BufferedImage;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.Locale;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -190,6 +195,163 @@ class UI {
 
     private static String hex(Color color) {
         return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    /**
+     * Logo untuk layar. Gambar sumber (besar) dikecilkan bertahap lalu digambar
+     * langsung dengan kualitas tinggi, jadi tetap tajam di layar dengan skala
+     * Windows 125% / 150%.
+     */
+    static Icon logoIcon(int height) {
+        return makeIcon(logoImage(), height);
+    }
+
+    /** Logo TANPA tulisan (logo-icon.png) untuk header kecil. Jatuh ke logo utama bila tidak ada. */
+    static Icon markIcon(int height) {
+        return makeIcon(markImage(), height);
+    }
+
+    private static Icon makeIcon(BufferedImage source, int height) {
+        if (source == null) {
+            return null;
+        }
+        final int w = Math.round(source.getWidth() * (height / (float) source.getHeight()));
+        final int h = height;
+        final BufferedImage hi = shrink(source, w * 3, h * 3);
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.drawImage(hi, x, y, w, h, null);
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return w;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return h;
+            }
+        };
+    }
+
+    /** Kecilkan dengan membagi dua berulang (rata-rata piksel), tanpa memperbesar. */
+    private static BufferedImage shrink(BufferedImage src, int targetW, int targetH) {
+        BufferedImage cur = src;
+        while (cur.getWidth() / 2 >= targetW && cur.getHeight() / 2 >= targetH) {
+            cur = resize(cur, cur.getWidth() / 2, cur.getHeight() / 2,
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        }
+        if (cur.getWidth() > targetW && cur.getHeight() > targetH) {
+            cur = resize(cur, targetW, targetH, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        }
+        return cur;
+    }
+
+    private static BufferedImage resize(BufferedImage src, int w, int h, Object interpolation) {
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interpolation);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.drawImage(src, 0, 0, w, h, null);
+        g.dispose();
+        return out;
+    }
+
+    private static BufferedImage logoCache;
+    private static java.util.List<Image> iconCache;
+
+    private static BufferedImage loadTrimmed(String path) {
+        try (InputStream in = UI.class.getResourceAsStream(path)) {
+            if (in == null) {
+                return null;
+            }
+            BufferedImage image = ImageIO.read(in);
+            return image == null ? null : trimTransparent(image);
+        } catch (IOException ex) {
+            return null;
+        }
+    }
+
+    private static BufferedImage markCache;
+
+    /** Logo tanpa tulisan; jatuh ke logo utama bila file logo-icon.png tidak ada. */
+    static BufferedImage markImage() {
+        if (markCache == null) {
+            markCache = loadTrimmed("/images/logo-icon.png");
+        }
+        return markCache != null ? markCache : logoImage();
+    }
+
+    /** Logo utama (dengan tulisan) untuk halaman login. */
+    static BufferedImage logoImage() {
+        if (logoCache == null) {
+            logoCache = loadTrimmed("/images/logo-warung-aju.png");
+        }
+        return logoCache;
+    }
+
+    /**
+     * Ikon jendela (pojok kiri atas title bar dan taskbar): memakai logo TANPA tulisan
+     * dari /images/logo-icon.png dalam beberapa ukuran, supaya tajam di mana pun.
+     * Kalau file itu tidak ada, jatuh ke logo utama.
+     */
+    static java.util.List<Image> windowIcons() {
+        if (iconCache != null) {
+            return iconCache;
+        }
+        java.util.List<Image> list = new java.util.ArrayList<>();
+        BufferedImage src = markImage();
+        if (src != null) {
+            int[] sizes = {16, 20, 24, 32, 48, 64, 128, 256};
+            for (int size : sizes) {
+                float scale = Math.min(size / (float) src.getWidth(), size / (float) src.getHeight());
+                int w = Math.max(1, Math.round(src.getWidth() * scale));
+                int h = Math.max(1, Math.round(src.getHeight() * scale));
+                BufferedImage small = shrink(src, w, h);
+                BufferedImage canvas = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = canvas.createGraphics();
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g.drawImage(small, (size - w) / 2, (size - h) / 2, w, h, null);
+                g.dispose();
+                list.add(canvas);
+            }
+        }
+        iconCache = list;
+        return list;
+    }
+
+    private static BufferedImage trimTransparent(BufferedImage img) {
+        int minX = img.getWidth();
+        int minY = img.getHeight();
+        int maxX = -1;
+        int maxY = -1;
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                int alpha = (img.getRGB(x, y) >>> 24) & 0xFF;
+                if (alpha > 10) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < 0) {
+            return img;
+        }
+        return img.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     // ---------- Panel / kartu ----------

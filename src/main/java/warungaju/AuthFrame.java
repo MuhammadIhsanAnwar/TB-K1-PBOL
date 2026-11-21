@@ -44,6 +44,11 @@ public class AuthFrame extends JFrame {
             }
             return new Dimension(440, 300);
         }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return new Dimension(440, getPreferredSize().height);
+        }
     };
     private final JTextField loginEmail = UI.input("");
     private final JPasswordField loginPassword = new JPasswordField();
@@ -78,6 +83,42 @@ public class AuthFrame extends JFrame {
     private JPanel resetPasswordFields;
     private JPanel passwordResetForm;
 
+    /** Panel dasar yang bisa di-scroll bila isi lebih tinggi dari jendela, tetap rata tengah bila muat. */
+    private static class ScrollRoot extends JPanel implements javax.swing.Scrollable {
+        ScrollRoot() {
+            super(new GridBagLayout());
+        }
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(java.awt.Rectangle visible, int orientation,
+                int direction) {
+            return 24;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(java.awt.Rectangle visible, int orientation,
+                int direction) {
+            return Math.max(24, visible.height - 40);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            java.awt.Container parent = getParent();
+            return parent instanceof javax.swing.JViewport
+                && parent.getHeight() > getPreferredSize().height;
+        }
+    }
+
     public AuthFrame() {
         setTitle("Warung Aju - Masuk");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -85,12 +126,17 @@ public class AuthFrame extends JFrame {
         setMinimumSize(new Dimension(580, 620));
         setLocationRelativeTo(null);
 
-        JPanel root = new JPanel(new GridBagLayout());
+        JPanel root = new ScrollRoot();
         root.setBorder(BorderFactory.createEmptyBorder(32, 42, 34, 42));
         root.setBackground(UI.BG_DARK);
-        JLabel title = UI.htmlLabel("<html><div style='font-size:26px;font-weight:bold;"
-            + "color:#DFFF00'>Warung Aju</div><font color='#C8D0FF'>Keuangan usaha, "
-            + "lebih terarah.</font></html>");
+        JLabel logo = new JLabel(UI.logoIcon(120));
+        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        logo.setHorizontalAlignment(JLabel.CENTER);
+        if (!UI.windowIcons().isEmpty()) {
+            setIconImages(UI.windowIcons());
+        }
+        JLabel title = UI.htmlLabel("<html><div style='text-align:center'>"
+            + "<font color='#C8D0FF'> </font></div></html>");
         title.setFont(new Font(UI.FONT, Font.PLAIN, 14));
         title.setHorizontalAlignment(JLabel.CENTER);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -118,6 +164,7 @@ public class AuthFrame extends JFrame {
         tabs.add(showLoginButton);
         tabs.add(showRegisterButton);
         tabs.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tabs.setMaximumSize(new Dimension(Integer.MAX_VALUE, tabs.getPreferredSize().height));
 
         JPanel content = new JPanel() {
             @Override
@@ -127,16 +174,25 @@ public class AuthFrame extends JFrame {
                 return preferred;
             }
         };
+        
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setMaximumSize(new Dimension(440, Integer.MAX_VALUE));
+        content.add(logo);
+        content.add(Box.createVerticalStrut(10));
         content.add(title);
-        content.add(Box.createVerticalStrut(22));
+        content.add(Box.createVerticalStrut(18));
         content.add(cardPanel);
         content.add(Box.createVerticalStrut(16));
         content.add(tabs);
         root.add(content);
-        setContentPane(root);
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(root);
+        scroll.setBorder(null);
+        scroll.setHorizontalScrollBarPolicy(
+            javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUnitIncrement(24);
+        scroll.getViewport().setBackground(UI.BG_DARK);
+        setContentPane(scroll);
 
         loginButton.addActionListener(event -> signIn());
         registerButton.addActionListener(event -> signUp());
@@ -274,6 +330,10 @@ public class AuthFrame extends JFrame {
 
     private void addFormItem(JPanel form, JComponent component, int gap) {
         component.setAlignmentX(Component.LEFT_ALIGNMENT);
+        if (component instanceof javax.swing.text.JTextComponent) {
+            component.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, component.getPreferredSize().height));
+        }
         form.add(component);
         form.add(Box.createVerticalStrut(gap));
     }
