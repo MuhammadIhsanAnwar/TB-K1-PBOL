@@ -1,7 +1,9 @@
 package warungaju;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 class AuthFrameTest {
@@ -16,5 +18,16 @@ class AuthFrameTest {
         assertEquals("Lemah", AuthFrame.passwordStrengthLevel(2));
         assertEquals("Kuat", AuthFrame.passwordStrengthLevel(4));
         assertEquals("Sangat kuat", AuthFrame.passwordStrengthLevel(5));
+    }
+
+    @Test
+    void userFacingAuthErrorsDoNotExposeSupabaseDetails() {
+        String message = AuthFrame.userFacingErrorMessage(
+            new IOException("Supabase mengembalikan HTTP 400: [invalid_credentials] "
+                + "Invalid login credentials"));
+
+        assertEquals("Email atau kata sandi tidak sesuai.", message);
+        assertFalse(message.contains("Supabase"));
+        assertFalse(message.contains("HTTP"));
     }
 }

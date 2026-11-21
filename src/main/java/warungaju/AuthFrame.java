@@ -7,6 +7,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.net.SocketTimeoutException;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -68,7 +70,7 @@ public class AuthFrame extends JFrame {
     private final JButton cancelPasswordResetButton = UI.secondaryButton("Kembali ke Masuk");
     private final JButton verifySignupButton = UI.button("Verifikasi Email");
     private final JButton resendVerificationButton = UI.secondaryButton("Kirim ulang email");
-    private final JButton returnToLoginButton = UI.button("Kembali ke masuk");
+    private final JButton returnToLoginButton = UI.button("Kembali ke Masuk");
     private final JPanel tabs = new JPanel(new GridLayout(1, 2, 8, 0));
     private final JLabel verificationMessage = new JLabel("", JLabel.CENTER);
     private final JLabel resetPasswordMessage = new JLabel("", JLabel.CENTER);
@@ -192,11 +194,28 @@ public class AuthFrame extends JFrame {
         addFormItem(content, verificationMessage, 8);
         addFormItem(content, label("Masukkan kode 6 angka dari email verifikasi."), 8);
         addFormItem(content, verificationCode, 8);
-        addFormItem(content, verifySignupButton, 8);
-        addFormItem(content, resendVerificationButton, 8);
-        addFormItem(content, returnToLoginButton, 8);
+        addFormItem(content, verificationActions(), 8);
         panel.add(content, BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel verificationActions() {
+        JPanel actions = verticalForm();
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        verifySignupButton.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+            verifySignupButton.getPreferredSize().height));
+        actions.add(verifySignupButton);
+        actions.add(Box.createVerticalStrut(8));
+
+        JPanel secondaryActions = new JPanel(new GridLayout(1, 2, 8, 0));
+        secondaryActions.setOpaque(false);
+        secondaryActions.add(resendVerificationButton);
+        secondaryActions.add(returnToLoginButton);
+        secondaryActions.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+            Math.max(resendVerificationButton.getPreferredSize().height,
+                returnToLoginButton.getPreferredSize().height)));
+        actions.add(secondaryActions);
+        return actions;
     }
 
     private JPanel passwordResetPanel() {
@@ -205,8 +224,8 @@ public class AuthFrame extends JFrame {
         JPanel form = verticalForm();
         resetPasswordMessage.setForeground(UI.TEXT_MUTED);
         addFormItem(form, label("Atur ulang kata sandi"), 8);
-        addFormItem(form, wrappedLabel("Masukkan email akun. Supabase akan mengirimkan kode OTP "
-            + "6 angka untuk mengatur kata sandi baru."), 8);
+        addFormItem(form, wrappedLabel("Masukkan email akun untuk menerima kode 6 angka "
+            + "dan mengatur kata sandi baru."), 8);
         addFormItem(form, label("Email"), 8);
         addFormItem(form, resetPasswordEmail, 8);
         addFormItem(form, sendPasswordResetButton, 8);
@@ -375,7 +394,7 @@ public class AuthFrame extends JFrame {
                         loginEmail.setText(email);
                         showLogin();
                         JOptionPane.showMessageDialog(AuthFrame.this,
-                            "Akun sudah dikonfirmasi oleh Supabase. Silakan masuk.");
+                            "Email akun sudah terverifikasi. Silakan masuk.");
                     } else {
                         showVerification(email);
                     }
@@ -387,13 +406,13 @@ public class AuthFrame extends JFrame {
                     if (registrationMayHaveCompleted(cause)) {
                         showVerification(email);
                         verificationMessage.setText("<html><div style='text-align:center'>"
-                            + "Supabase mengalami timeout. Akun mungkin sudah tercatat; "
-                            + "periksa email dan folder spam. Jika belum ada kode, gunakan "
+                            + "Pendaftaran belum dapat dipastikan selesai. Akun mungkin sudah "
+                            + "tercatat. Periksa email dan folder spam. Jika belum ada kode, gunakan "
                             + "Kirim ulang email.</div></html>");
                         JOptionPane.showMessageDialog(AuthFrame.this,
-                            "Supabase timeout saat mendaftar. Jangan mendaftar ulang dulu: "
-                                + "akun mungkin sudah dibuat. Periksa Authentication → Users "
-                                + "dan email Anda, atau kirim ulang kode verifikasi.",
+                            "Pendaftaran belum dapat dipastikan selesai. Jangan mendaftar ulang "
+                                + "dulu karena akun mungkin sudah tercatat. Periksa email dan "
+                                + "folder spam, atau kirim ulang kode verifikasi.",
                             "Pendaftaran belum terkonfirmasi", JOptionPane.WARNING_MESSAGE);
                     } else {
                         showError(cause);
@@ -428,8 +447,9 @@ public class AuthFrame extends JFrame {
                         passwordResetForm.add(resetPasswordFields, 5);
                     }
                     resetPasswordMessage.setText("<html><div style='text-align:center'>"
-                        + "Jika email terdaftar, kode 6 angka akan dikirim. Periksa juga "
-                        + "folder spam.</div></html>");
+                        + "Jika alamat email terdaftar, periksa kotak masuk dan folder spam "
+                        + "untuk kode pemulihan 6 angka. Jika belum diterima, coba lagi "
+                        + "beberapa saat.</div></html>");
                     revalidate();
                     repaint();
                 } catch (InterruptedException ex) {
@@ -537,7 +557,8 @@ public class AuthFrame extends JFrame {
                 try {
                     get();
                     JOptionPane.showMessageDialog(AuthFrame.this,
-                        "Jika akun menunggu verifikasi, email baru akan segera dikirim.");
+                        "Permintaan kode verifikasi telah diproses. Periksa kotak masuk dan "
+                            + "folder spam. Jika belum diterima, coba lagi beberapa saat.");
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     showError(ex);
@@ -551,8 +572,9 @@ public class AuthFrame extends JFrame {
     private void showVerification(String email) {
         pendingVerificationEmail = email;
         verificationCode.setText("");
-        verificationMessage.setText("<html><div style='text-align:center'>Email verifikasi "
-            + "berisi kode 6 angka telah diminta untuk <b>" + email + "</b>.</div></html>");
+        verificationMessage.setText("<html><div style='text-align:center'>"
+            + "Periksa kotak masuk dan folder spam untuk kode verifikasi ke <b>" + email
+            + "</b>. Jika belum diterima, pilih Kirim ulang email.</div></html>");
         showCard("verification");
         tabs.setVisible(false);
     }
@@ -695,10 +717,54 @@ public class AuthFrame extends JFrame {
 
     private void showError(Throwable error) {
         setBusy(false);
-        String message = error == null || error.getMessage() == null
-            ? "Permintaan gagal." : error.getMessage();
-        JOptionPane.showMessageDialog(this, message, "Koneksi / autentikasi gagal",
+        JOptionPane.showMessageDialog(this, userFacingErrorMessage(error), "Permintaan gagal",
             JOptionPane.ERROR_MESSAGE);
+    }
+
+    static String userFacingErrorMessage(Throwable error) {
+        if (error == null) {
+            return "Terjadi kendala saat memproses permintaan. Coba lagi beberapa saat.";
+        }
+        StringBuilder details = new StringBuilder();
+        boolean timedOut = false;
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof SocketTimeoutException) timedOut = true;
+            if (cause.getMessage() != null) {
+                if (details.length() > 0) details.append(' ');
+                details.append(cause.getMessage());
+            }
+        }
+        String normalized = details.toString().toLowerCase(Locale.ROOT);
+        if (normalized.contains("akun ini sedang dinonaktifkan")) {
+            return "Akun ini sedang dinonaktifkan.";
+        }
+        if (normalized.contains("invalid login credentials")
+                || normalized.contains("invalid_credentials")) {
+            return "Email atau kata sandi tidak sesuai.";
+        }
+        if (normalized.contains("email not confirmed")
+                || normalized.contains("email_not_confirmed")
+                || normalized.contains("verifikasi email terlebih dahulu")) {
+            return "Verifikasi email terlebih dahulu sebelum masuk.";
+        }
+        if (normalized.contains("already registered")
+                || normalized.contains("user_already_exists")) {
+            return "Email sudah terdaftar. Silakan masuk atau gunakan Lupa kata sandi.";
+        }
+        if ((normalized.contains("otp") || normalized.contains("token"))
+                && (normalized.contains("invalid") || normalized.contains("expired"))) {
+            return "Kode tidak valid atau sudah kedaluwarsa. Periksa kode dan coba lagi.";
+        }
+        if (normalized.contains("rate limit") || normalized.contains("too many requests")
+                || normalized.contains("http 429")) {
+            return "Terlalu banyak percobaan. Tunggu beberapa saat sebelum mencoba lagi.";
+        }
+        if (timedOut || normalized.contains("timeout") || normalized.contains("timed out")
+                || normalized.contains("melewati batas waktu")) {
+            return "Koneksi sedang lambat. Periksa internet dan coba lagi beberapa saat.";
+        }
+        return "Terjadi kendala saat memproses permintaan. Periksa koneksi internet dan "
+            + "coba lagi. Jika masalah berlanjut, hubungi administrator.";
     }
 
     private static class AccountData {

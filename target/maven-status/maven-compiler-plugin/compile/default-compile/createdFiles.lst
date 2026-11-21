@@ -51,6 +51,7 @@ warungaju\StartupFrame$2.class
 warungaju\AuthFrame$9.class
 warungaju\MainFrame.class
 warungaju\AuthFrame$3.class
+warungaju\AdminFrame$RowNumberRenderer.class
 warungaju\UI$OutlineButton.class
 warungaju\AuthFrame$AccountData.class
 warungaju\AdminFrame$1.class
@@ -64,6 +65,7 @@ warungaju\LaporanKeuangan.class
 warungaju\UI$SearchIcon.class
 warungaju\SupabaseJdbcServer.class
 warungaju\AccountDialog$1.class
+warungaju\AdminFrame$WibDateRenderer.class
 warungaju\SupabaseClient$ConnectionCheck.class
 warungaju\Main.class
 warungaju\AdminFrame$IoAction.class

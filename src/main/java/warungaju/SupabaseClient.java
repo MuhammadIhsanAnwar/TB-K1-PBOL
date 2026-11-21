@@ -370,9 +370,14 @@ public class SupabaseClient {
 
     private String errorMessage(String response, int status) {
         String detail = null;
+        String errorCode = null;
         if (response != null && !response.trim().isEmpty()) {
             try {
                 JsonObject json = JsonParser.parseString(response).getAsJsonObject();
+                if (json.has("code") && !json.get("code").isJsonNull()
+                        && json.get("code").isJsonPrimitive()) {
+                    errorCode = json.get("code").getAsString();
+                }
                 for (String key : new String[]{"msg", "message", "error_description", "error"}) {
                     if (json.has(key) && !json.get(key).isJsonNull()) {
                         detail = json.get(key).getAsString();
@@ -380,19 +385,18 @@ public class SupabaseClient {
                     }
                 }
             } catch (IllegalStateException | com.google.gson.JsonSyntaxException ex) {
-                detail = response;
+                detail = "respons non-JSON dari Supabase";
             }
         }
+        if (detail == null) detail = errorCode;
+        String diagnostic = detail == null ? "detail tidak tersedia"
+            : (errorCode == null ? detail : "[" + errorCode + "] " + detail);
         if (status == HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
             return "Supabase mengembalikan gateway timeout (504). Permintaan daftar mungkin "
                 + "sudah diproses; cek Authentication > Users sebelum mencoba lagi. Periksa "
-                + "juga Auth Logs dan konfigurasi SMTP. Detail: "
-                + (detail == null ? "gateway timeout" : detail);
+                + "juga Auth Logs dan konfigurasi SMTP. Detail: " + diagnostic;
         }
-        if (detail != null) {
-            return "Supabase mengembalikan HTTP " + status + ": " + detail;
-        }
-        return "Permintaan Supabase gagal (HTTP " + status + ").";
+        return "Supabase mengembalikan HTTP " + status + ": " + diagnostic;
     }
 
     private String stringValue(JsonObject json, String key) {

@@ -1,39 +1,68 @@
 package warungaju;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 public class AdminFrame extends JFrame {
+    private static final int NUMBER_COLUMN = 0;
+    private static final int NAME_COLUMN = 2;
+    private static final int LAST_ACTIVE_COLUMN = 5;
+    private static final int CREATED_COLUMN = 6;
+    private static final int VERIFIED_COLUMN = 7;
+    private static final int INTERNAL_ID_COLUMN = 8;
+    private static final ZoneId WIB_ZONE = ZoneId.of("Asia/Jakarta");
+    private static final DateTimeFormatter WIB_FORMAT =
+        DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss 'WIB'", Locale.ROOT)
+            .withZone(WIB_ZONE);
+
     private final SupabaseClient client;
     private final AuthSession session;
     private final DefaultTableModel model = new DefaultTableModel(
-        new String[]{"ID", "Email", "Nama", "Role", "Status", "Terakhir aktif",
-            "Dibuat", "Diverifikasi"}, 0) {
+        new String[]{"Nomor", "Email", "Nama", "Role", "Status", "Terakhir aktif",
+            "Dibuat", "Diverifikasi", "ID internal"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
     private final JButton refreshButton = UI.button("Muat Ulang");
-    private final JButton changePasswordButton = UI.secondaryButton("Ubah Kata Sandi");
+    private final JButton changePasswordButton = UI.secondaryButton("Ubah Kata Sandi Saya");
     private final JButton toggleButton = UI.secondaryButton("Aktifkan / Nonaktifkan");
     private final JButton deleteButton = UI.secondaryButton("Hapus Akun");
+    private final JComboBox<String> sortOptions = new JComboBox<>(new String[]{
+        "Nama (A-Z)", "Nama (Z-A)", "Dibuat (terbaru)", "Dibuat (terlama)",
+        "Terakhir aktif (terbaru)", "Terakhir aktif (terlama)"
+    });
     private JTable table;
+    private TableRowSorter<DefaultTableModel> sorter;
     private boolean actionsEnabled = true;
 
     public AdminFrame(SupabaseClient client, AuthSession session, AppUser user) {
@@ -71,10 +100,38 @@ public class AdminFrame extends JFrame {
         table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(event -> updateSelectionActions());
         UI.styleTable(table);
-        root.add(UI.scrollPane(table), BorderLayout.CENTER);
+        sorter = createTableSorter(model);
+        table.setRowSorter(sorter);
+        table.getColumnModel().getColumn(INTERNAL_ID_COLUMN).setMinWidth(0);
+        table.getColumnModel().getColumn(INTERNAL_ID_COLUMN).setMaxWidth(0);
+        table.getColumnModel().getColumn(INTERNAL_ID_COLUMN).setPreferredWidth(0);
+        table.removeColumn(table.getColumnModel().getColumn(INTERNAL_ID_COLUMN));
+        table.getColumnModel().getColumn(NUMBER_COLUMN).setCellRenderer(new RowNumberRenderer());
+        table.getColumnModel().getColumn(LAST_ACTIVE_COLUMN).setCellRenderer(new WibDateRenderer());
+        table.getColumnModel().getColumn(CREATED_COLUMN).setCellRenderer(new WibDateRenderer());
+        table.getColumnModel().getColumn(VERIFIED_COLUMN).setCellRenderer(new WibDateRenderer());
+
+        JPanel tablePanel = new JPanel(new BorderLayout(0, 12));
+        tablePanel.setOpaque(false);
+        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        filterBar.setOpaque(false);
+        JLabel sortLabel = new JLabel("Urutkan:");
+        sortLabel.setForeground(UI.TEXT_MUTED);
+        filterBar.add(sortLabel);
+        sortOptions.setPreferredSize(new java.awt.Dimension(220, 42));
+        filterBar.add(sortOptions);
+        JLabel timeZoneLabel = new JLabel("Waktu ditampilkan dalam WIB (UTC+7)");
+        timeZoneLabel.setForeground(UI.TEXT_MUTED);
+        filterBar.add(timeZoneLabel);
+        tablePanel.add(filterBar, BorderLayout.NORTH);
+        tablePanel.add(UI.scrollPane(table), BorderLayout.CENTER);
+        root.add(tablePanel, BorderLayout.CENTER);
         setContentPane(root);
 
         refreshButton.addActionListener(event -> loadUsers());
+        sortOptions.addActionListener(event ->
+            applySortChoice(sorter, sortOptions.getSelectedIndex()));
+        applySortChoice(sorter, 0);
         changePasswordButton.addActionListener(event -> changePassword());
         toggleButton.addActionListener(event -> toggleActive());
         deleteButton.addActionListener(event -> deleteSelectedUser());
@@ -85,7 +142,7 @@ public class AdminFrame extends JFrame {
     private void loadUsers() {
         setActionsEnabled(false);
         model.setRowCount(0);
-        model.addRow(new Object[]{"Memuat data pengguna...", "", "", "", ""});
+        model.addRow(new Object[]{"", "Memuat data pengguna...", "", "", "", "", "", "", null});
         new SwingWorker<List<AppUser>, Void>() {
             @Override
             protected List<AppUser> doInBackground() throws Exception {
@@ -97,19 +154,24 @@ public class AdminFrame extends JFrame {
                 try {
                     List<AppUser> users = get();
                     model.setRowCount(0);
+                    int number = 1;
                     for (AppUser user : users) {
-                        model.addRow(new Object[]{user.id, user.email, user.fullName, user.role,
-                            user.active ? "Aktif" : "Nonaktif", user.lastActiveAt,
-                            user.createdAt, user.verifiedAt});
+                        model.addRow(new Object[]{number++, user.email, user.fullName, user.role,
+                            user.active ? "Aktif" : "Nonaktif",
+                            parseTimestamp(user.lastActiveAt), parseTimestamp(user.createdAt),
+                            parseTimestamp(user.verifiedAt), user.id});
                     }
                     if (users.isEmpty()) {
-                        model.addRow(new Object[]{"Belum ada pengguna.", "", "", "", "", "", "", ""});
+                        model.addRow(new Object[]{"", "Belum ada pengguna.", "", "", "", "",
+                            "", "", null});
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     showError(ex);
                 } catch (ExecutionException ex) {
                     showError(ex.getCause());
+                } catch (IllegalArgumentException ex) {
+                    showError(ex);
                 } finally {
                     setActionsEnabled(true);
                 }
@@ -146,7 +208,7 @@ public class AdminFrame extends JFrame {
             return null;
         }
         int modelRow = table.convertRowIndexToModel(row);
-        String id = String.valueOf(model.getValueAt(modelRow, 0));
+        String id = String.valueOf(model.getValueAt(modelRow, INTERNAL_ID_COLUMN));
         try {
             java.util.UUID.fromString(id);
         } catch (IllegalArgumentException ex) {
@@ -156,6 +218,98 @@ public class AdminFrame extends JFrame {
         return new String[]{id, String.valueOf(model.getValueAt(modelRow, 1)),
             String.valueOf(model.getValueAt(modelRow, 3)),
             String.valueOf(model.getValueAt(modelRow, 4))};
+    }
+
+    static TableRowSorter<DefaultTableModel> createTableSorter(
+            DefaultTableModel tableModel) {
+        TableRowSorter<DefaultTableModel> result = new TableRowSorter<>(tableModel);
+        result.setComparator(NAME_COLUMN, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+        Comparator<Instant> timestampComparator =
+            Comparator.nullsFirst(Comparator.<Instant>naturalOrder());
+        result.setComparator(LAST_ACTIVE_COLUMN, timestampComparator);
+        result.setComparator(CREATED_COLUMN, timestampComparator);
+        result.setComparator(VERIFIED_COLUMN, timestampComparator);
+        result.setSortable(NUMBER_COLUMN, false);
+        result.setSortable(INTERNAL_ID_COLUMN, false);
+        return result;
+    }
+
+    static void applySortChoice(TableRowSorter<DefaultTableModel> tableSorter, int choice) {
+        int column;
+        SortOrder order;
+        switch (choice) {
+            case 0:
+                column = NAME_COLUMN;
+                order = SortOrder.ASCENDING;
+                break;
+            case 1:
+                column = NAME_COLUMN;
+                order = SortOrder.DESCENDING;
+                break;
+            case 2:
+                column = CREATED_COLUMN;
+                order = SortOrder.DESCENDING;
+                break;
+            case 3:
+                column = CREATED_COLUMN;
+                order = SortOrder.ASCENDING;
+                break;
+            case 4:
+                column = LAST_ACTIVE_COLUMN;
+                order = SortOrder.DESCENDING;
+                break;
+            case 5:
+                column = LAST_ACTIVE_COLUMN;
+                order = SortOrder.ASCENDING;
+                break;
+            default:
+                throw new IllegalArgumentException("Pilihan pengurutan tidak valid.");
+        }
+        tableSorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(column, order)));
+    }
+
+    static Instant parseTimestamp(String timestamp) {
+        if (timestamp == null || timestamp.trim().isEmpty()) return null;
+        try {
+            return Instant.parse(timestamp.trim());
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException(
+                "Format waktu dari Supabase tidak valid: " + timestamp, ex);
+        }
+    }
+
+    static String formatWib(String timestamp) {
+        Instant instant = parseTimestamp(timestamp);
+        return instant == null ? "" : WIB_FORMAT.format(instant);
+    }
+
+    private static class RowNumberRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable source, Object value,
+                boolean selected, boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(source, value, selected, focused, row, column);
+            setText(Integer.toString(row + 1));
+            setHorizontalAlignment(CENTER);
+            if (!selected) {
+                setBackground(row % 2 == 0 ? UI.GLASS_LIGHT : UI.ROW_ALT);
+                setForeground(UI.TEXT_LIGHT);
+            }
+            return this;
+        }
+    }
+
+    private static class WibDateRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable source, Object value,
+                boolean selected, boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(source, value, selected, focused, row, column);
+            setText(value instanceof Instant ? WIB_FORMAT.format((Instant) value) : "");
+            if (!selected) {
+                setBackground(row % 2 == 0 ? UI.GLASS_LIGHT : UI.ROW_ALT);
+                setForeground(UI.TEXT_LIGHT);
+            }
+            return this;
+        }
     }
 
     private void toggleActive() {

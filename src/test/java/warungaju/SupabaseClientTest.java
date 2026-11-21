@@ -1,6 +1,7 @@
 package warungaju;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -46,6 +47,16 @@ class SupabaseClientTest {
         assertEquals("/auth/v1/health", requests.get(0).path);
         assertEquals("GET", requests.get(0).method);
         assertEquals("test-publishable-key", requests.get(0).apiKey);
+    }
+
+    @Test
+    void authErrorsExposeHttpStatusAndSafeProviderCode() {
+        IOException error = assertThrows(IOException.class,
+            () -> client.signIn("pemilik@example.id", "wrong-password"));
+
+        assertTrue(error.getMessage().contains("HTTP 400"));
+        assertTrue(error.getMessage().contains("[invalid_credentials]"));
+        assertTrue(error.getMessage().contains("Invalid login credentials"));
     }
 
     @Test
@@ -149,6 +160,7 @@ class SupabaseClientTest {
         assertEquals("pemilik@example.id", body.get("email").getAsString());
         assertEquals("StrongPassword123!", body.get("password").getAsString());
         assertEquals("Pemilik Usaha", body.getAsJsonObject("data").get("nama").getAsString());
+        assertEquals("application/json; charset=UTF-8", request.contentType);
     }
 
     @Test
@@ -178,6 +190,9 @@ class SupabaseClientTest {
         if ("/auth/v1/signup".equals(path)) {
             respond(exchange, 200, "{\"user\":{\"id\":\"" + USER_ID
                 + "\",\"email\":\"pemilik@example.id\"},\"session\":null}");
+        } else if ("/auth/v1/token".equals(path)) {
+            respond(exchange, 400, "{\"code\":\"invalid_credentials\","
+                + "\"message\":\"Invalid login credentials\"}");
         } else if ("/auth/v1/verify".equals(path)) {
             respond(exchange, 200, "{\"access_token\":\"verified-access-token\","
                 + "\"refresh_token\":\"verified-refresh-token\",\"expires_in\":3600,"
@@ -235,6 +250,7 @@ class SupabaseClientTest {
         final String query;
         final String body;
         final String apiKey;
+        final String contentType;
         final String authorization;
         final String prefer;
 
@@ -244,6 +260,7 @@ class SupabaseClientTest {
             query = exchange.getRequestURI().getRawQuery();
             this.body = body;
             apiKey = exchange.getRequestHeaders().getFirst("apikey");
+            contentType = exchange.getRequestHeaders().getFirst("Content-Type");
             authorization = exchange.getRequestHeaders().getFirst("Authorization");
             prefer = exchange.getRequestHeaders().getFirst("Prefer");
         }

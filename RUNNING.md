@@ -238,6 +238,13 @@ Jika provider SMTP
 menolak koneksi port 465, periksa port submission TLS yang didukung provider
 email dan setel port yang sesuai di dashboard.
 
+Respons HTTP 2xx dari endpoint `signup`, `resend`, atau `recover` hanya berarti
+permintaan diproses oleh Supabase Auth; respons tersebut tidak membuktikan email
+sampai ke mailbox. Periksa **Authentication → Logs** untuk hasil pengiriman dan
+pesan SMTP/provider. Aplikasi menampilkan kegagalan HTTP beserta status dan kode
+error Supabase yang tersedia, tetapi tidak mencatat key, password, OTP, atau
+token sesi.
+
 Jika proses daftar menampilkan `Read timed out`, respons Supabase mungkin
 terlambat saat memproses pengiriman email. Akun bisa saja sudah tercatat walaupun
 aplikasi belum menerima respons. Periksa **Authentication → Users**, email
