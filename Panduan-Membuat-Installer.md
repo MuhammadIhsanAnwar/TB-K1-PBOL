@@ -109,6 +109,11 @@ menambahkan folder itu hanya ke PATH proses build yang sedang berjalan; PATH
 Windows tidak perlu diubah secara permanen. Jadi tidak perlu mengetik lokasi
 WiX atau menambahkannya ke PATH secara manual.
 
+Logo aplikasi tersimpan di `src\main\resources\images`: layar masuk dan
+pemuatan memakai `warung-aju-bawah.png`, navbar memakai `warung-aju-samping.png`,
+dan ikon jendela/installer memakai `warung-aju-ikon.png` beserta versi
+Windows `warung-aju-ikon.ico`.
+
 ### Langkah membuat installer
 
 Buka PowerShell di folder proyek yang berisi `pom.xml`, kemudian jalankan:

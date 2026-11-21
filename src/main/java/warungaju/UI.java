@@ -206,9 +206,14 @@ class UI {
         return makeIcon(logoImage(), height);
     }
 
-    /** Logo TANPA tulisan (logo-icon.png) untuk header kecil. Jatuh ke logo utama bila tidak ada. */
+    /** Logo tanpa tulisan untuk header kecil dan ikon aplikasi. */
     static Icon markIcon(int height) {
         return makeIcon(markImage(), height);
+    }
+
+    /** Logo horizontal untuk navbar. */
+    static Icon sideLogoIcon(int height) {
+        return makeIcon(sideLogoImage(), height);
     }
 
     private static Icon makeIcon(BufferedImage source, int height) {
@@ -268,6 +273,7 @@ class UI {
     }
 
     private static BufferedImage logoCache;
+    private static BufferedImage sideLogoCache;
     private static java.util.List<Image> iconCache;
 
     private static BufferedImage loadTrimmed(String path) {
@@ -284,26 +290,32 @@ class UI {
 
     private static BufferedImage markCache;
 
-    /** Logo tanpa tulisan; jatuh ke logo utama bila file logo-icon.png tidak ada. */
+    /** Logo ikon tanpa tulisan. */
     static BufferedImage markImage() {
         if (markCache == null) {
-            markCache = loadTrimmed("/images/logo-icon.png");
+            markCache = loadTrimmed("/images/warung-aju-ikon.png");
         }
-        return markCache != null ? markCache : logoImage();
+        return markCache;
     }
 
     /** Logo utama (dengan tulisan) untuk halaman login. */
     static BufferedImage logoImage() {
         if (logoCache == null) {
-            logoCache = loadTrimmed("/images/logo-warung-aju.png");
+            logoCache = loadTrimmed("/images/warung-aju-bawah.png");
         }
         return logoCache;
     }
 
+    /** Logo horizontal untuk navbar. */
+    static BufferedImage sideLogoImage() {
+        if (sideLogoCache == null) {
+            sideLogoCache = loadTrimmed("/images/warung-aju-samping.png");
+        }
+        return sideLogoCache;
+    }
+
     /**
-     * Ikon jendela (pojok kiri atas title bar dan taskbar): memakai logo TANPA tulisan
-     * dari /images/logo-icon.png dalam beberapa ukuran, supaya tajam di mana pun.
-     * Kalau file itu tidak ada, jatuh ke logo utama.
+     * Ikon jendela (title bar dan taskbar) memakai logo ikon dalam beberapa ukuran.
      */
     static java.util.List<Image> windowIcons() {
         if (iconCache != null) {

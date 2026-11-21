@@ -52,6 +52,7 @@ jpackage ^
     --app-version 1.0.0 ^
     --vendor "Warung Aju" ^
     --description "Aplikasi perencanaan keuangan UMKM" ^
+    --icon "src\main\resources\images\warung-aju-ikon.ico" ^
     --input target\jpackage-input ^
     --main-jar warungaju.jar ^
     --main-class warungaju.Main ^

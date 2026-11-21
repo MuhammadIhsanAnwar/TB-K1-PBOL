@@ -3,10 +3,7 @@ package warungaju;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagLayout;
-import java.awt.RenderingHints;
 import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -31,6 +28,7 @@ class StartupFrame extends JFrame {
         setResizable(false);
         setSize(640, 430);
         setLocationRelativeTo(null);
+        setIconImages(UI.windowIcons());
 
         JPanel root = new JPanel(new GridBagLayout());
         root.setBorder(BorderFactory.createEmptyBorder(24, 28, 24, 28));
@@ -44,30 +42,15 @@ class StartupFrame extends JFrame {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
 
-        JLabel mark = new JLabel("W", SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics graphics) {
-                Graphics2D g = (Graphics2D) graphics.create();
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(UI.ACCENT);
-                g.fillRoundRect(0, 0, getWidth(), getHeight(), UI.ARC, UI.ARC);
-                g.dispose();
-                super.paintComponent(graphics);
-            }
-        };
-        mark.setPreferredSize(new Dimension(54, 54));
-        mark.setMaximumSize(new Dimension(54, 54));
-        mark.setAlignmentX(CENTER_ALIGNMENT);
-        mark.setOpaque(false);
-        mark.setForeground(UI.BUTTON_TEXT);
-        mark.setFont(new Font(UI.FONT, Font.BOLD, 26));
+        JLabel logo = new JLabel(UI.logoIcon(116), SwingConstants.CENTER);
+        logo.setAlignmentX(CENTER_ALIGNMENT);
+        logo.setMaximumSize(new Dimension(116, 116));
 
-        JLabel welcome = UI.htmlLabel("<html><div style='text-align:center;font-size:28px'>"
-            + "Selamat datang di <font color='#DFFF00'>Warung Aju</font></div></html>");
-        welcome.setFont(new Font(UI.FONT, Font.BOLD, 26));
+        JLabel welcome = UI.htmlLabel("<html><div style='text-align:center;font-size:25px'>"
+            + "Selamat datang</div></html>");
+        welcome.setFont(new Font(UI.FONT, Font.BOLD, 24));
         welcome.setAlignmentX(CENTER_ALIGNMENT);
-        welcome.setMaximumSize(new Dimension(460, 50));
+        welcome.setMaximumSize(new Dimension(460, 40));
 
         JLabel subtitle = new JLabel(
             "Menyiapkan ruang kerja keuangan usaha Anda", SwingConstants.CENTER);
@@ -89,14 +72,14 @@ class StartupFrame extends JFrame {
         progress.setMaximumSize(new Dimension(420, 10));
         progress.setAlignmentX(CENTER_ALIGNMENT);
 
-        content.add(mark);
-        content.add(Box.createVerticalStrut(18));
+        content.add(logo);
+        content.add(Box.createVerticalStrut(8));
         content.add(welcome);
         content.add(Box.createVerticalStrut(8));
         content.add(subtitle);
-        content.add(Box.createVerticalStrut(36));
+        content.add(Box.createVerticalStrut(22));
         content.add(progress);
-        content.add(Box.createVerticalStrut(14));
+        content.add(Box.createVerticalStrut(10));
         content.add(connectionStatus);
         card.add(content, BorderLayout.CENTER);
         root.add(card);

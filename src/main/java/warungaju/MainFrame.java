@@ -53,6 +53,7 @@ public class MainFrame extends JFrame {
         setMinimumSize(new Dimension(1040, 700));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setIconImages(UI.windowIcons());
         build();
     }
 
@@ -96,36 +97,15 @@ public class MainFrame extends JFrame {
             BorderFactory.createEmptyBorder(14, 28, 14, 28)
         ));
 
-        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        JButton brand = new JButton(UI.sideLogoIcon(44));
+        brand.setBorder(BorderFactory.createEmptyBorder());
+        brand.setContentAreaFilled(false);
+        brand.setFocusPainted(false);
         brand.setOpaque(false);
-        JLabel mark = new JLabel("W", SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(UI.ACCENT);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), UI.ARC, UI.ARC);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        mark.setPreferredSize(new Dimension(40, 40));
-        mark.setOpaque(false);
-        mark.setForeground(UI.BUTTON_TEXT);
-        mark.setFont(new Font(UI.FONT, Font.BOLD, 20));
-        JPanel name = new JPanel();
-        name.setOpaque(false);
-        name.setLayout(new BoxLayout(name, BoxLayout.Y_AXIS));
-        JLabel title = new JLabel("Warung Aju");
-        title.setFont(new Font(UI.FONT, Font.BOLD, 18));
-        title.setForeground(UI.TEXT_LIGHT);
-        JLabel subtitle = new JLabel("Pembukuan dan perencanaan UMKM");
-        subtitle.setFont(new Font(UI.FONT, Font.PLAIN, 11));
-        subtitle.setForeground(UI.TEXT_MUTED);
-        name.add(title);
-        name.add(subtitle);
-        brand.add(mark);
-        brand.add(name);
+        brand.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        brand.setToolTipText("Kembali ke Dashboard");
+        brand.getAccessibleContext().setAccessibleName("Warung Aju - Kembali ke Dashboard");
+        brand.addActionListener(event -> showDashboard());
 
         JPanel account = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         account.setOpaque(false);

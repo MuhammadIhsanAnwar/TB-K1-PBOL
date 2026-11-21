@@ -256,20 +256,15 @@ public class AuthFrame extends JFrame {
     }
 
     private JPanel verificationActions() {
-        JPanel actions = verticalForm();
+        JPanel actions = new JPanel(new GridLayout(2, 1, 0, 8));
+        actions.setOpaque(false);
         actions.setAlignmentX(Component.LEFT_ALIGNMENT);
-        verifySignupButton.setMaximumSize(new Dimension(Integer.MAX_VALUE,
-            verifySignupButton.getPreferredSize().height));
-        actions.add(verifySignupButton);
-        actions.add(Box.createVerticalStrut(8));
 
         JPanel secondaryActions = new JPanel(new GridLayout(1, 2, 8, 0));
         secondaryActions.setOpaque(false);
         secondaryActions.add(resendVerificationButton);
         secondaryActions.add(returnToLoginButton);
-        secondaryActions.setMaximumSize(new Dimension(Integer.MAX_VALUE,
-            Math.max(resendVerificationButton.getPreferredSize().height,
-                returnToLoginButton.getPreferredSize().height)));
+        actions.add(verifySignupButton);
         actions.add(secondaryActions);
         return actions;
     }
