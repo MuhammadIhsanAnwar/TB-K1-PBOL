@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  WARUNGAJU - jalankan aplikasi desktop
+REM  Warung Aju - jalankan aplikasi desktop
 REM  Akses Supabase langsung; backend JDBC lokal tidak diperlukan.
 REM ============================================================
 cd /d "%~dp0"

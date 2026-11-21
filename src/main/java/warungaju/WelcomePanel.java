@@ -29,7 +29,7 @@ public class WelcomePanel extends JPanel {
         eyebrow.setFont(new Font(UI.FONT, Font.BOLD, 13));
         g.gridx = 0; g.gridy = 0; center.add(eyebrow, g);
 
-        JLabel title = UI.htmlLabel("<html><div style='font-size:42px'>Selamat Datang di<br><font color='#DFFF00'>WARUNGAJU</font></div></html>");
+        JLabel title = UI.htmlLabel("<html><div style='font-size:42px'>Selamat Datang di<br><font color='#DFFF00'>Warung Aju</font></div></html>");
         title.setForeground(UI.TEXT_LIGHT);
         title.setFont(new Font(UI.FONT, Font.BOLD, 42));
         g.gridy = 1; g.insets = new Insets(6, 20, 4, 20); center.add(title, g);
@@ -60,12 +60,25 @@ public class WelcomePanel extends JPanel {
 
     private JPanel brandStrip() {
         JPanel strip = new JPanel(new GridBagLayout());
-        strip.setPreferredSize(new Dimension(110, 0));
-        strip.setBackground(UI.BG_DARK);
+        strip.setPreferredSize(new Dimension(88, 0));
+        strip.setBackground(UI.SIDEBAR_BG);
         strip.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, UI.GLASS_BORDER));
-        JLabel mark = new JLabel("W");
-        mark.setForeground(UI.ACCENT);
-        mark.setFont(new Font(UI.FONT, Font.BOLD, 54));
+        JLabel mark = new JLabel("W", SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(UI.ACCENT);
+                g.fillRoundRect(0, 0, getWidth(), getHeight(), UI.ARC, UI.ARC);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        mark.setPreferredSize(new Dimension(52, 52));
+        mark.setOpaque(false);
+        mark.setForeground(UI.BUTTON_TEXT);
+        mark.setFont(new Font(UI.FONT, Font.BOLD, 26));
         strip.add(mark);
         return strip;
     }
@@ -94,7 +107,7 @@ public class WelcomePanel extends JPanel {
         JLabel t = new JLabel(title);
         t.setForeground(UI.TEXT_LIGHT);
         t.setFont(new Font(UI.FONT, Font.BOLD, 16));
-        JLabel d = UI.htmlLabel("<html><div style='width:140px;color:#C8D0FF;font-size:12px'>" + description + "</div></html>");
+        JLabel d = UI.htmlLabel("<html><div style='width:220px;color:#C8D0FF;font-size:12px'>" + description + "</div></html>");
         panel.add(n, BorderLayout.NORTH);
         panel.add(t, BorderLayout.CENTER);
         panel.add(d, BorderLayout.SOUTH);
@@ -105,7 +118,7 @@ public class WelcomePanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(UI.GLASS_LIGHT);
         panel.setBorder(new EmptyBorder(14, 30, 14, 30));
-        JLabel left = new JLabel("WARUNGAJU  /  PERENCANAAN KEUANGAN UMKM");
+        JLabel left = new JLabel("Warung Aju  /  PERENCANAAN KEUANGAN UMKM");
         left.setForeground(UI.TEXT_MUTED);
         left.setFont(new Font(UI.FONT, Font.BOLD, 10));
         JLabel right = new JLabel("Ruang kerja keuangan usaha");

@@ -1,4 +1,4 @@
-# Menjalankan WARUNGAJU
+# Menjalankan Warung Aju
 
 ## Prasyarat
 
@@ -144,10 +144,10 @@ Sebelum aplikasi digunakan:
 2. Pastikan **Data API** aktif dan schema `public` tersedia untuk Data API.
    Jangan menonaktifkan grants atau kebijakan RLS yang dibuat oleh schema.
 3. Di pengaturan **Authentication → Providers → Email**, aktifkan **Confirm
-   email** agar Supabase mengirim tautan verifikasi. Jika `mailer_autoconfirm`
-   bernilai `true` pada `/auth/v1/settings`, akun otomatis dikonfirmasi dan
-   email verifikasi tidak dikirim. Konfigurasikan SMTP Supabase; password SMTP
-   hanya disimpan di dashboard.
+   email** agar Supabase mengirim OTP verifikasi. Pastikan **Token length** 6.
+   Jika `mailer_autoconfirm` bernilai `true` pada `/auth/v1/settings`, akun
+   otomatis dikonfirmasi dan email verifikasi tidak dikirim. Konfigurasikan
+   SMTP Supabase; password SMTP hanya disimpan di dashboard.
 4. Daftarkan akun. Pendaftaran dari aplikasi selalu
    membuat role `umkm`; verifikasi email bila Supabase memintanya.
 5. Buat akun `warungaju@neoverse.my.id` di **Supabase Dashboard →
@@ -201,6 +201,12 @@ ada: kata sandi disimpan dan diverifikasi oleh Supabase Auth di `auth.users`
 dalam bentuk terproteksi, bukan diduplikasi ke tabel aplikasi. Jangan mencoba
 membuat akun dengan `INSERT` langsung ke `auth.users`.
 
+OTP email tidak memerlukan tabel OTP di `public`. Supabase Auth yang membuat,
+menyimpan sementara, mengirim, memeriksa masa berlaku, dan memvalidasi OTP.
+Trigger `handle_new_user` pada `online_schema.sql` hanya menyinkronkan profil
+ke `public.users`; Java meminta Supabase mengirim OTP dan meneruskan OTP yang
+dimasukkan pengguna ke endpoint verifikasi Supabase Auth.
+
 Transaksi, produk, pengaturan simulasi, dan input prediksi arus kas disimpan per
 akun. Data yang sama akan dimuat saat akun masuk dari perangkat lain. Akses data
 dibatasi oleh RLS berdasarkan user yang sedang login; role Super Admin tidak
@@ -218,7 +224,7 @@ Konfirmasi bahwa **Confirm email** aktif di pengaturan provider Email, kemudian
 aktifkan custom SMTP dan masukkan. Pengaturan SMTP yang sama dipakai untuk email
 verifikasi dan email reset kata sandi:
 
-- Sender name: `WARUNGAJU`
+- Sender name: `Warung Aju`
 - Sender email: `warungaju@neoverse.my.id`
 - SMTP host: `mail.neoverse.my.id`
 - SMTP port: `465` (SSL/TLS)
@@ -245,5 +251,20 @@ desktop. Karena password mailbox sempat dibagikan di chat, ganti/rotasi password
 tersebut sebelum memasukkannya ke dashboard Supabase.
 
 Di layar login, **Lupa kata sandi?** membuka form tersendiri untuk memasukkan
-email akun. Aplikasi meminta Supabase mengirim tautan reset; pengiriman tetap
-bergantung pada konfigurasi SMTP dan template email Supabase.
+email akun. Aplikasi meminta Supabase mengirim OTP pemulihan; pengguna
+memasukkan OTP 6 angka dan kata sandi baru, lalu Supabase memvalidasi kode dan
+memperbarui kata sandi.
+
+### Template email OTP
+
+Di **Authentication → Email Templates**, pastikan template **Confirm signup**
+dan **Reset Password** menampilkan `{{ .Token }}` (kode OTP), bukan hanya
+`{{ .ConfirmationURL }}` (tautan). Simpan template, lalu uji dengan alamat email
+yang dapat diakses. Pengiriman tetap dilakukan oleh Supabase melalui SMTP yang
+dikonfigurasi.
+
+Jika pendaftaran menampilkan HTTP `504` atau gateway timeout, Supabase mungkin
+sudah membuat akun sebelum pengiriman SMTP timeout. Jangan langsung mendaftar
+ulang dengan email yang sama. Periksa **Authentication → Users**, email/spam,
+dan **Auth Logs**. Layar OTP aplikasi menyediakan **Kirim ulang email** agar
+permintaan OTP baru tetap dilakukan oleh Supabase.

@@ -5,8 +5,8 @@
 Untuk pemakaian desktop, alurnya langsung ke Supabase melalui HTTPS:
 
 ```text
-WARUNGAJU.exe
-    |-- /auth/v1/*  (masuk, daftar, verifikasi, reset password)
+Warung Aju.exe
+    |-- /auth/v1/*  (masuk, daftar, kirim/verifikasi OTP, reset password)
     |-- /rest/v1/*  (profil dan workspace)
     |-- /rest/v1/rpc/* (perubahan nama dan operasi akun)
     v
@@ -17,7 +17,7 @@ Supabase Auth + Data API
 Database Supabase
 ```
 
-Karena itu, aplikasi desktop tidak membutuhkan backend WARUNGAJU terpisah,
+Karena itu, aplikasi desktop tidak membutuhkan backend Warung Aju terpisah,
 port database, JDBC connection string, atau file `.env` untuk mengakses data.
 Komputer pengguna hanya membutuhkan koneksi internet dan installer aplikasi.
 
@@ -48,10 +48,23 @@ aplikasi klien.
    Tabel `users` dan `umkm_workspaces` harus tetap memiliki grants serta
    kebijakan RLS dari skrip schema. Fungsi RPC untuk operasi profil/akun juga
    harus tersedia dan hanya diberikan kepada role `authenticated`.
-3. Aktifkan **Confirm email** di Supabase Auth dan konfigurasi SMTP di dashboard
-   jika pendaftaran harus mewajibkan verifikasi email. Kredensial SMTP hanya
-   disimpan di dashboard Supabase, bukan di EXE.
+3. Aktifkan **Confirm email**, set panjang token ke 6 angka, dan konfigurasi
+   SMTP di dashboard Supabase. Pada template **Confirm signup** dan **Reset
+   Password**, tampilkan `{{ .Token }}` agar email berisi OTP, bukan hanya link.
+   Kredensial SMTP hanya disimpan di dashboard Supabase, bukan di EXE.
 4. Buat/verifikasi akun Super Admin sesuai petunjuk di `RUNNING.md`.
+
+Java hanya memanggil endpoint Supabase Auth untuk meminta pengiriman OTP dan
+meneruskan kode yang dimasukkan pengguna ke endpoint verifikasi Supabase.
+Pembuatan, pengiriman email, masa berlaku, serta validasi OTP dilakukan oleh
+Supabase Auth. Tidak perlu membuat tabel OTP sendiri; `online_schema.sql`
+menyinkronkan data profil ke `public.users`, sedangkan OTP dikelola internal
+oleh Supabase Auth.
+
+Jika pendaftaran mendapat HTTP `504`, permintaan email Supabase/SMTP timeout;
+akun mungkin sudah dibuat. Jangan langsung mendaftar ulang. Periksa
+**Authentication → Users**, email/spam, dan **Auth Logs**. Aplikasi menyediakan
+opsi kirim ulang OTP dari layar verifikasi.
 
 Semua pengguna membutuhkan internet dan project Supabase harus aktif. Tidak
 dibuat database lokal; data dibaca dan disimpan pada project Supabase tersebut.
@@ -109,7 +122,7 @@ Skrip akan membuat JAR aplikasi, menyiapkannya untuk `jpackage`, lalu
 menghasilkan installer. File hasilnya:
 
 ```text
-target\installer\WARUNGAJU-1.0.0.exe
+target\installer\Warung Aju-1.0.0.exe
 ```
 
 Jika proses berhenti karena file installer tersebut sudah ada, pindahkan atau

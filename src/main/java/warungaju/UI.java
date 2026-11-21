@@ -13,23 +13,23 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
- * Pusat styling aplikasi dengan palet cokelat, krem, dan permukaan hangat.
+ * Pusat styling aplikasi dengan palet putih, cokelat hangat, dan merah bata.
  *
  * Nama field lama (BG_DARK, GLASS_*, PURPLE_TEXT, dst.) sengaja dipertahankan
  * supaya panel lain yang belum diubah tetap bisa dikompilasi.
  */
 class UI {
-    static final String FONT = "Aptos";
+    static final String FONT = "Segoe UI";
     /** Radius sudut (px). ARC = diameter busur yang dipakai Graphics2D dan FlatLaf. */
     static final int RADIUS = 10;
     static final int ARC = RADIUS * 2;
-    static boolean lightMode;
+    static boolean lightMode = true;
 
     // --- Nama lama (dipertahankan) ---
     static Color BG_DARK;        // latar halaman
-    static Color ACCENT;         // emerald
+    static Color ACCENT;         // merah bata
     static Color ACCENT_HOVER;
-    static Color PURPLE_TEXT;    // sekarang emas (aksen kedua)
+    static Color PURPLE_TEXT;    // nama lama, sekarang cokelat hangat
     static Color PRIMARY_START;
     static Color PRIMARY_END;
     static Color PRIMARY_HOVER_START;
@@ -64,49 +64,49 @@ class UI {
 
     static void initTheme() {
         if (lightMode) {
-            BG_DARK = new Color(246, 240, 230);
-            GLASS_LIGHT = new Color(255, 250, 241);
-            GLASS_BORDER = new Color(222, 209, 190);
-            GLASS_ACTIVE = new Color(235, 222, 203);
-            TEXT_LIGHT = new Color(55, 40, 30);
-            TEXT_MUTED = new Color(119, 99, 79);
-            ACCENT = new Color(112, 73, 48);
-            ACCENT_HOVER = new Color(137, 91, 60);
-            PURPLE_TEXT = new Color(153, 111, 63);
-            SIDEBAR_BG = new Color(59, 42, 31);
-            SIDEBAR_HOVER = new Color(75, 54, 40);
-            SIDEBAR_ACTIVE = new Color(94, 66, 47);
-            SIDEBAR_TEXT = new Color(226, 211, 190);
-            SIDEBAR_ACTIVE_TEXT = new Color(255, 250, 241);
+            BG_DARK = new Color(250, 247, 243);
+            GLASS_LIGHT = Color.WHITE;
+            GLASS_BORDER = new Color(234, 224, 216);
+            GLASS_ACTIVE = new Color(250, 232, 229);
+            TEXT_LIGHT = new Color(55, 42, 36);
+            TEXT_MUTED = new Color(126, 108, 99);
+            ACCENT = new Color(180, 55, 48);
+            ACCENT_HOVER = new Color(203, 68, 58);
+            PURPLE_TEXT = new Color(125, 79, 59);
+            SIDEBAR_BG = new Color(255, 253, 251);
+            SIDEBAR_HOVER = new Color(248, 241, 236);
+            SIDEBAR_ACTIVE = new Color(250, 232, 229);
+            SIDEBAR_TEXT = new Color(98, 79, 70);
+            SIDEBAR_ACTIVE_TEXT = new Color(137, 48, 42);
             BUTTON_TEXT = Color.WHITE;
-            INPUT_BG = new Color(255, 252, 246);
-            ROW_ALT = new Color(248, 242, 232);
-            HEADER_BG = new Color(238, 227, 210);
-            GREEN = new Color(79, 111, 72);
-            RED = new Color(164, 77, 61);
-            AMBER = new Color(153, 111, 63);
+            INPUT_BG = new Color(255, 255, 255);
+            ROW_ALT = new Color(251, 248, 245);
+            HEADER_BG = new Color(246, 239, 234);
+            GREEN = new Color(125, 79, 59);
+            RED = new Color(180, 55, 48);
+            AMBER = new Color(166, 96, 59);
         } else {
-            BG_DARK = new Color(43, 32, 25);
-            GLASS_LIGHT = new Color(56, 42, 33);
-            GLASS_BORDER = new Color(91, 68, 51);
-            GLASS_ACTIVE = new Color(75, 55, 42);
-            TEXT_LIGHT = new Color(244, 233, 216);
-            TEXT_MUTED = new Color(199, 179, 155);
-            ACCENT = new Color(198, 151, 103);
-            ACCENT_HOVER = new Color(216, 173, 125);
-            PURPLE_TEXT = new Color(216, 173, 125);
-            SIDEBAR_BG = new Color(35, 25, 19);
-            SIDEBAR_HOVER = new Color(54, 39, 29);
-            SIDEBAR_ACTIVE = new Color(75, 53, 38);
-            SIDEBAR_TEXT = new Color(211, 193, 169);
-            SIDEBAR_ACTIVE_TEXT = new Color(255, 246, 230);
-            BUTTON_TEXT = new Color(43, 32, 25);
-            INPUT_BG = new Color(64, 47, 35);
-            ROW_ALT = new Color(50, 38, 30);
-            HEADER_BG = new Color(66, 49, 37);
-            GREEN = new Color(145, 174, 123);
-            RED = new Color(221, 130, 109);
-            AMBER = new Color(216, 173, 125);
+            BG_DARK = new Color(45, 34, 30);
+            GLASS_LIGHT = new Color(60, 46, 41);
+            GLASS_BORDER = new Color(91, 70, 63);
+            GLASS_ACTIVE = new Color(89, 55, 51);
+            TEXT_LIGHT = new Color(249, 242, 237);
+            TEXT_MUTED = new Color(202, 180, 168);
+            ACCENT = new Color(220, 96, 83);
+            ACCENT_HOVER = new Color(237, 117, 101);
+            PURPLE_TEXT = new Color(220, 158, 125);
+            SIDEBAR_BG = new Color(38, 29, 26);
+            SIDEBAR_HOVER = new Color(58, 42, 38);
+            SIDEBAR_ACTIVE = new Color(79, 48, 44);
+            SIDEBAR_TEXT = new Color(215, 197, 187);
+            SIDEBAR_ACTIVE_TEXT = new Color(255, 242, 237);
+            BUTTON_TEXT = Color.WHITE;
+            INPUT_BG = new Color(69, 51, 45);
+            ROW_ALT = new Color(54, 42, 38);
+            HEADER_BG = new Color(72, 53, 47);
+            GREEN = new Color(220, 158, 125);
+            RED = new Color(239, 126, 113);
+            AMBER = new Color(231, 173, 123);
         }
         // Sisa nama lama: semuanya warna solid, tidak ada gradient lagi.
         GLASS_TOP = GLASS_LIGHT;
@@ -118,24 +118,31 @@ class UI {
         PRIMARY_HOVER_START = ACCENT_HOVER;
         PRIMARY_HOVER_END = ACCENT_HOVER;
 
-        UIManager.put("defaultFont", new Font(FONT, Font.PLAIN, 13));
+        UIManager.put("defaultFont", new Font(FONT, Font.PLAIN, 14));
         UIManager.put("Component.arc", ARC);
-        UIManager.put("Button.arc", ARC);
+        UIManager.put("Button.arc", 14);
         UIManager.put("TextComponent.arc", ARC);
+        UIManager.put("Component.minimumHeight", 40);
+        UIManager.put("Button.minimumHeight", 42);
+        UIManager.put("TextField.minimumHeight", 42);
+        UIManager.put("PasswordField.minimumHeight", 42);
+        UIManager.put("ComboBox.minimumHeight", 42);
+        UIManager.put("Component.focusColor", new Color(ACCENT.getRed(),
+            ACCENT.getGreen(), ACCENT.getBlue(), 55));
         UIManager.put("Component.borderColor", GLASS_BORDER);
         UIManager.put("Component.focusedBorderColor", ACCENT);
-        UIManager.put("Component.focusWidth", 1);
+        UIManager.put("Component.focusWidth", 1.5f);
         UIManager.put("Component.innerFocusWidth", 0);
-        UIManager.put("ScrollBar.width", 10);
-        UIManager.put("Button.font", new Font(FONT, Font.BOLD, 13));
+        UIManager.put("ScrollBar.width", 12);
+        UIManager.put("Button.font", new Font(FONT, Font.BOLD, 14));
         UIManager.put("Button.background", ACCENT);
         UIManager.put("Button.foreground", BUTTON_TEXT);
         UIManager.put("Button.borderWidth", 0);
-        UIManager.put("Table.font", new Font(FONT, Font.PLAIN, 13));
+        UIManager.put("Table.font", new Font(FONT, Font.PLAIN, 14));
         UIManager.put("Table.foreground", TEXT_LIGHT);
         UIManager.put("Table.selectionBackground", GLASS_ACTIVE);
         UIManager.put("Table.selectionForeground", TEXT_LIGHT);
-        UIManager.put("Table.rowHeight", 40);
+        UIManager.put("Table.rowHeight", 44);
         UIManager.put("Table.showHorizontalLines", true);
         UIManager.put("Table.showVerticalLines", false);
         UIManager.put("TabbedPane.selected", GLASS_LIGHT);
@@ -154,6 +161,11 @@ class UI {
         UIManager.put("Table.background", GLASS_LIGHT);
         UIManager.put("TableHeader.background", HEADER_BG);
         UIManager.put("TableHeader.foreground", TEXT_LIGHT);
+        UIManager.put("OptionPane.background", BG_DARK);
+        UIManager.put("OptionPane.messageForeground", TEXT_LIGHT);
+        UIManager.put("PopupMenu.background", GLASS_LIGHT);
+        UIManager.put("ToolTip.background", lightMode ? TEXT_LIGHT : GLASS_LIGHT);
+        UIManager.put("ToolTip.foreground", lightMode ? Color.WHITE : TEXT_LIGHT);
     }
 
     static void toggleTheme() {
@@ -213,45 +225,33 @@ class UI {
         return card(title, value, color, null);
     }
 
-    /** Kartu ala nota: label kecil, garis putus-putus, angka rata kanan. */
+    /** Kartu ringkas dengan label, nilai utama, dan aksen warna di sisi kiri. */
     static JPanel card(String title, String value, Color color, final Runnable onClick) {
         JPanel p = glassPanel();
-        p.setLayout(new BorderLayout(0, 10));
-        p.setBorder(new EmptyBorder(16, 20, 16, 20));
+        p.setLayout(new BorderLayout(14, 0));
+        p.setBorder(new EmptyBorder(0, 18, 0, 20));
+
+        JPanel accent = new JPanel();
+        accent.setBackground(color);
+        accent.setPreferredSize(new Dimension(4, 1));
 
         JLabel a = new JLabel(title);
         a.setForeground(TEXT_MUTED);
-        a.setFont(new Font(FONT, Font.PLAIN, 12));
+        a.setFont(new Font(FONT, Font.BOLD, 13));
 
-        JPanel head = new JPanel(new BorderLayout(0, 8));
-        head.setOpaque(false);
-        head.add(a, BorderLayout.NORTH);
-        head.add(new DashedLine(), BorderLayout.CENTER);
-
-        JLabel b = new JLabel(value, SwingConstants.RIGHT);
-        b.setFont(new Font(FONT, Font.BOLD, 24));
+        JLabel b = new JLabel(value);
+        b.setFont(new Font(FONT, Font.BOLD, 25));
         b.setForeground(color);
 
-        p.add(head, BorderLayout.NORTH);
-        p.add(b, BorderLayout.CENTER);
+        JPanel content = new JPanel(new BorderLayout(0, 8));
+        content.setOpaque(false);
+        content.setBorder(new EmptyBorder(18, 0, 18, 0));
+        content.add(a, BorderLayout.NORTH);
+        content.add(b, BorderLayout.CENTER);
+        p.add(accent, BorderLayout.WEST);
+        p.add(content, BorderLayout.CENTER);
         addCardHover(p, a, b, onClick);
         return p;
-    }
-
-    private static class DashedLine extends JComponent {
-        DashedLine() {
-            setPreferredSize(new Dimension(10, 1));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(GLASS_BORDER);
-            g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-                10f, new float[]{4f, 3f}, 0f));
-            g2.drawLine(0, 0, getWidth(), 0);
-            g2.dispose();
-        }
     }
 
     private static void addCardHover(final JPanel panel, final JLabel title, final JLabel value, final Runnable onClick) {
@@ -293,7 +293,7 @@ class UI {
         return new SolidButton(text);
     }
 
-    /** Tombol utama: warna solid emerald, sudut membulat, tanpa kilau. */
+    /** Tombol utama merah bata dengan sudut membulat. */
     private static class SolidButton extends JButton {
         private float hover;
         private final Timer animation;
@@ -303,7 +303,7 @@ class UI {
             setForeground(BUTTON_TEXT);
             setFocusPainted(false);
             setContentAreaFilled(false);
-            setBorder(BorderFactory.createEmptyBorder(11, 22, 11, 22));
+            setBorder(BorderFactory.createEmptyBorder(11, 20, 11, 20));
             setCursor(new Cursor(Cursor.HAND_CURSOR));
             setFont(new Font(FONT, Font.BOLD, 14));
             animation = new Timer(15, e -> {
@@ -325,14 +325,74 @@ class UI {
         protected void paintComponent(Graphics graphics) {
             Graphics2D g = (Graphics2D) graphics.create();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setColor(interpolate(ACCENT, ACCENT_HOVER, hover));
+            g.setColor(isEnabled()
+                ? interpolate(ACCENT, ACCENT_HOVER, hover) : GLASS_BORDER);
             g.fillRoundRect(0, 0, getWidth(), getHeight(), ARC, ARC);
             g.dispose();
             super.paintComponent(graphics);
         }
     }
 
-    /** Menu sidebar: teks terang di atas navy gelap. */
+    private static class NavIcon implements Icon {
+        private final String label;
+
+        NavIcon(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 18;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 18;
+        }
+
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(component.getForeground());
+            g.setStroke(new BasicStroke(1.7f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            if (label.startsWith("Dashboard")) {
+                g.drawRoundRect(x + 2, y + 2, 14, 14, 4, 4);
+                g.drawLine(x + 9, y + 3, x + 9, y + 15);
+                g.drawLine(x + 3, y + 9, x + 15, y + 9);
+            } else if (label.startsWith("Transaksi")) {
+                g.drawRoundRect(x + 3, y + 2, 12, 14, 3, 3);
+                g.drawLine(x + 6, y + 6, x + 12, y + 6);
+                g.drawLine(x + 6, y + 9, x + 12, y + 9);
+                g.drawLine(x + 6, y + 12, x + 10, y + 12);
+            } else if (label.startsWith("Produk")) {
+                g.drawRoundRect(x + 2, y + 4, 14, 11, 3, 3);
+                g.drawLine(x + 2, y + 8, x + 16, y + 8);
+                g.drawLine(x + 6, y + 4, x + 6, y + 8);
+                g.drawLine(x + 12, y + 4, x + 12, y + 8);
+            } else if (label.startsWith("Simulasi")) {
+                g.drawLine(x + 3, y + 15, x + 3, y + 3);
+                g.drawLine(x + 3, y + 15, x + 16, y + 15);
+                g.drawLine(x + 5, y + 12, x + 8, y + 9);
+                g.drawLine(x + 8, y + 9, x + 11, y + 11);
+                g.drawLine(x + 11, y + 11, x + 15, y + 5);
+            } else if (label.startsWith("Prediksi")) {
+                g.drawRoundRect(x + 2, y + 3, 14, 12, 3, 3);
+                g.drawLine(x + 2, y + 7, x + 16, y + 7);
+                g.drawLine(x + 6, y + 10, x + 8, y + 10);
+                g.drawLine(x + 11, y + 10, x + 13, y + 10);
+                g.drawLine(x + 6, y + 13, x + 8, y + 13);
+            } else {
+                g.drawRoundRect(x + 3, y + 2, 12, 14, 3, 3);
+                g.drawLine(x + 6, y + 6, x + 12, y + 6);
+                g.drawLine(x + 6, y + 9, x + 12, y + 9);
+                g.drawLine(x + 6, y + 12, x + 10, y + 12);
+            }
+            g.dispose();
+        }
+    }
+
+    /** Sidebar navigation with active and hover states. */
     static JButton navButton(String text) {
         final JButton b = new JButton(text);
         b.setOpaque(false);
@@ -342,6 +402,8 @@ class UI {
         b.setFocusPainted(false);
         b.setBorder(BorderFactory.createEmptyBorder(12, 24, 12, 20));
         b.setHorizontalAlignment(SwingConstants.LEFT);
+        b.setIcon(new NavIcon(text));
+        b.setIconTextGap(14);
         b.setCursor(new Cursor(Cursor.HAND_CURSOR));
         b.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
@@ -364,7 +426,7 @@ class UI {
         return b;
     }
 
-    /** Menu aktif: garis tebal emerald di kiri + teks cerah, tanpa kotak menyala. */
+    /** Menu aktif memakai garis merah bata dan latar hangat. */
     static void setNavActive(JButton b, boolean active) {
         b.putClientProperty("warungaju.active", active);
         b.setOpaque(active);
@@ -374,9 +436,9 @@ class UI {
         b.setFont(new Font(FONT, active ? Font.BOLD : Font.PLAIN, 14));
         b.setBorder(active
             ? BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 4, 0, 0, ACCENT),
-                BorderFactory.createEmptyBorder(12, 20, 12, 20))
-            : BorderFactory.createEmptyBorder(12, 24, 12, 20));
+                BorderFactory.createMatteBorder(0, 3, 0, 0, ACCENT),
+                BorderFactory.createEmptyBorder(12, 17, 12, 20))
+            : BorderFactory.createEmptyBorder(12, 20, 12, 20));
     }
 
     static JButton secondaryButton(String text) {
@@ -483,18 +545,19 @@ class UI {
 
     static JTextField input(String value) {
         JTextField field = new JTextField(value);
-        field.setPreferredSize(new Dimension(150, 38));
-        field.setMargin(new Insets(6, 12, 6, 12));
+        field.setPreferredSize(new Dimension(180, 42));
+        field.setMargin(new Insets(8, 12, 8, 12));
         field.setBackground(INPUT_BG);
         field.setForeground(TEXT_LIGHT);
         field.setCaretColor(ACCENT);
+        field.setFont(new Font(FONT, Font.PLAIN, 14));
         return field;
     }
 
     // ---------- Tabel ----------
 
     static void styleTable(JTable table) {
-        table.setRowHeight(40);
+        table.setRowHeight(44);
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
         table.setGridColor(GLASS_BORDER);

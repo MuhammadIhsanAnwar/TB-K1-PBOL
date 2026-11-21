@@ -7,16 +7,16 @@ public class SimulasiPanel extends JPanel {
     final JLabel result = UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Belum ada simulasi</h2><p style='color:#C8D0FF'>Atur asumsi usaha, lalu hitung perkiraan laba.</p></html>");
 
     public SimulasiPanel(MainFrame f) {
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(18, 18));
         setBackground(UI.BG_DARK);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
         
         add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Simulasi Bisnis</h1><font color='#C8D0FF'>Ukur dampak biaya, kapasitas, dan harga terhadap laba usaha.</font></html>"), BorderLayout.NORTH);
         
         JPanel form = UI.formGrid();
         GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(10, 10, 10, 10);
+        g.insets = new Insets(9, 10, 9, 10);
         
         WorkspaceData.SimulationSettings saved = f.workspace.simulation;
         JTextField bahan = UI.input(String.valueOf(saved.ingredientPrice));
@@ -49,7 +49,9 @@ public class SimulasiPanel extends JPanel {
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, box, output);
         split.setResizeWeight(0.5);
         split.setDividerLocation(0.5);
-        split.setDividerSize(8);
+        split.setDividerSize(1);
+        split.setContinuousLayout(true);
+        split.setBackground(UI.BG_DARK);
         split.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         
         add(split, BorderLayout.CENTER);

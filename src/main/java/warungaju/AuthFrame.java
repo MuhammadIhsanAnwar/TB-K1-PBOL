@@ -2,20 +2,28 @@ package warungaju;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class AuthFrame extends JFrame {
     private static final String EMAIL_PATTERN =
@@ -23,7 +31,18 @@ public class AuthFrame extends JFrame {
             + "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$";
     private final SupabaseClient client = new SupabaseClient();
     private final CardLayout cards = new CardLayout();
-    private final JPanel cardPanel = new JPanel(cards);
+    private final JPanel cardPanel = new JPanel(cards) {
+        @Override
+        public Dimension getPreferredSize() {
+            for (Component card : getComponents()) {
+                if (card.isVisible()) {
+                    Dimension preferred = card.getPreferredSize();
+                    return new Dimension(Math.min(440, preferred.width), preferred.height);
+                }
+            }
+            return new Dimension(440, 300);
+        }
+    };
     private final JTextField loginEmail = UI.input("");
     private final JPasswordField loginPassword = new JPasswordField();
     private final JTextField resetPasswordEmail = UI.input("");
@@ -35,6 +54,9 @@ public class AuthFrame extends JFrame {
     private final JTextField registerEmail = UI.input("");
     private final JPasswordField registerPassword = new JPasswordField();
     private final JPasswordField confirmPassword = new JPasswordField();
+    private final JLabel passwordStrengthLabel = new JLabel(
+        "Kekuatan kata sandi: Belum diisi");
+    private final JProgressBar passwordStrengthBar = new JProgressBar(0, 5);
     private final JButton loginButton = UI.button("Masuk");
     private final JButton registerButton = UI.button("Buat Akun UMKM");
     private final JButton showLoginButton = UI.secondaryButton("Masuk");
@@ -52,39 +74,66 @@ public class AuthFrame extends JFrame {
     private final JLabel resetPasswordMessage = new JLabel("", JLabel.CENTER);
     private String pendingVerificationEmail;
     private JPanel resetPasswordFields;
+    private JPanel passwordResetForm;
 
     public AuthFrame() {
-        setTitle("WARUNGAJU - Masuk");
+        setTitle("Warung Aju - Masuk");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(560, 590);
-        setMinimumSize(new Dimension(500, 540));
+        setSize(660, 680);
+        setMinimumSize(new Dimension(580, 620));
         setLocationRelativeTo(null);
 
-        JPanel root = new JPanel(new BorderLayout(0, 20));
-        root.setBorder(BorderFactory.createEmptyBorder(28, 38, 30, 38));
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setBorder(BorderFactory.createEmptyBorder(32, 42, 34, 42));
         root.setBackground(UI.BG_DARK);
-        JLabel title = UI.htmlLabel("<html><h1 style='color:#DFFF00'>WARUNGAJU</h1>"
-            + "<font color='#C8D0FF'>Catat hari ini, rencanakan langkah berikutnya.</font></html>");
-        title.setFont(new Font(UI.FONT, Font.PLAIN, 15));
-        root.add(title, BorderLayout.NORTH);
+        JLabel title = UI.htmlLabel("<html><div style='font-size:26px;font-weight:bold;"
+            + "color:#DFFF00'>Warung Aju</div><font color='#C8D0FF'>Keuangan usaha, "
+            + "lebih terarah.</font></html>");
+        title.setFont(new Font(UI.FONT, Font.PLAIN, 14));
+        title.setHorizontalAlignment(JLabel.CENTER);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         loginEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
+        loginEmail.setPreferredSize(new Dimension(320, 42));
+        loginPassword.setPreferredSize(new Dimension(320, 42));
         resetPasswordEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
         resetPasswordCode.putClientProperty("JTextField.placeholderText", "Kode 6 angka");
         verificationCode.putClientProperty("JTextField.placeholderText", "Kode 6 angka");
         registerEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
         registerName.putClientProperty("JTextField.placeholderText", "Nama pemilik atau usaha");
+        registerEmail.setPreferredSize(new Dimension(320, 42));
+        registerPassword.setPreferredSize(new Dimension(320, 42));
         cardPanel.setOpaque(false);
         cardPanel.add(loginPanel(), "login");
         cardPanel.add(passwordResetPanel(), "password-reset");
         cardPanel.add(registerPanel(), "register");
         cardPanel.add(verificationPanel(), "verification");
-        root.add(cardPanel, BorderLayout.CENTER);
+        cards.show(cardPanel, "login");
+        cardPanel.setMaximumSize(new Dimension(440, Integer.MAX_VALUE));
+        cardPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         tabs.setOpaque(false);
         tabs.add(showLoginButton);
         tabs.add(showRegisterButton);
-        root.add(tabs, BorderLayout.SOUTH);
+        tabs.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel content = new JPanel() {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension preferred = super.getPreferredSize();
+                preferred.width = 440;
+                return preferred;
+            }
+        };
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setOpaque(false);
+        content.setMaximumSize(new Dimension(440, Integer.MAX_VALUE));
+        content.add(title);
+        content.add(Box.createVerticalStrut(22));
+        content.add(cardPanel);
+        content.add(Box.createVerticalStrut(16));
+        content.add(tabs);
+        root.add(content);
         setContentPane(root);
 
         loginButton.addActionListener(event -> signIn());
@@ -97,95 +146,169 @@ public class AuthFrame extends JFrame {
         resendVerificationButton.addActionListener(event -> resendVerification());
         returnToLoginButton.addActionListener(event -> showLogin());
         showLoginButton.addActionListener(event -> showLogin());
-        showRegisterButton.addActionListener(event -> cards.show(cardPanel, "register"));
+        showRegisterButton.addActionListener(event -> showCard("register"));
+        registerPassword.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                updatePasswordStrength();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                updatePasswordStrength();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                updatePasswordStrength();
+            }
+        });
     }
 
     private JPanel loginPanel() {
         JPanel panel = UI.glassPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
-        JPanel form = new JPanel(new GridLayout(0, 1, 8, 8));
-        form.setOpaque(false);
-        form.add(label("Masuk ke akun"));
-        form.add(label("Email"));
-        form.add(loginEmail);
-        form.add(label("Kata sandi"));
-        form.add(loginPassword);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 32, 30, 32));
+        JPanel form = verticalForm();
+        addFormItem(form, label("Masuk ke akun"), 8);
+        addFormItem(form, label("Email"), 8);
+        addFormItem(form, loginEmail, 8);
+        addFormItem(form, label("Kata sandi"), 8);
+        addFormItem(form, loginPassword, 8);
         JPanel actions = new JPanel(new GridLayout(2, 1, 0, 8));
         actions.setOpaque(false);
         actions.add(loginButton);
         actions.add(forgotPasswordButton);
-        form.add(actions);
+        addFormItem(form, actions, 8);
         panel.add(form, BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel verificationPanel() {
         JPanel panel = UI.glassPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(28, 24, 28, 24));
-        JPanel content = new JPanel(new GridLayout(0, 1, 10, 10));
-        content.setOpaque(false);
-        content.add(label("Periksa kotak masuk Anda"));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 32, 30, 32));
+        JPanel content = verticalForm();
+        addFormItem(content, label("Periksa kotak masuk Anda"), 8);
         verificationMessage.setForeground(UI.TEXT_MUTED);
-        content.add(verificationMessage);
-        content.add(label("Masukkan kode 6 angka dari email verifikasi."));
-        content.add(verificationCode);
-        content.add(verifySignupButton);
-        content.add(resendVerificationButton);
-        content.add(returnToLoginButton);
+        addFormItem(content, verificationMessage, 8);
+        addFormItem(content, label("Masukkan kode 6 angka dari email verifikasi."), 8);
+        addFormItem(content, verificationCode, 8);
+        addFormItem(content, verifySignupButton, 8);
+        addFormItem(content, resendVerificationButton, 8);
+        addFormItem(content, returnToLoginButton, 8);
         panel.add(content, BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel passwordResetPanel() {
         JPanel panel = UI.glassPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
-        JPanel form = new JPanel(new GridLayout(0, 1, 8, 8));
-        form.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(28, 30, 28, 30));
+        JPanel form = verticalForm();
         resetPasswordMessage.setForeground(UI.TEXT_MUTED);
-        form.add(label("Atur ulang kata sandi"));
-        form.add(label("Masukkan email akun. Kami akan mengirimkan tautan untuk "
-            + "membuat kata sandi baru."));
-        form.add(label("Email"));
-        form.add(resetPasswordEmail);
-        form.add(sendPasswordResetButton);
-        resetPasswordFields = new JPanel(new GridLayout(0, 1, 8, 8));
-        resetPasswordFields.setOpaque(false);
-        resetPasswordFields.add(label("Kode 6 angka dari email"));
-        resetPasswordFields.add(resetPasswordCode);
-        resetPasswordFields.add(label("Kata sandi baru (8+ karakter, huruf besar-kecil, angka, simbol)"));
-        resetPasswordFields.add(resetPasswordNew);
-        resetPasswordFields.add(label("Ulangi kata sandi baru"));
-        resetPasswordFields.add(resetPasswordConfirm);
-        resetPasswordFields.add(completePasswordResetButton);
-        resetPasswordFields.setVisible(false);
-        form.add(resetPasswordFields);
-        form.add(resetPasswordMessage);
-        form.add(cancelPasswordResetButton);
+        addFormItem(form, label("Atur ulang kata sandi"), 8);
+        addFormItem(form, wrappedLabel("Masukkan email akun. Supabase akan mengirimkan kode OTP "
+            + "6 angka untuk mengatur kata sandi baru."), 8);
+        addFormItem(form, label("Email"), 8);
+        addFormItem(form, resetPasswordEmail, 8);
+        addFormItem(form, sendPasswordResetButton, 8);
+        resetPasswordFields = verticalForm();
+        addFormItem(resetPasswordFields, label("Kode 6 angka dari email"), 6);
+        addFormItem(resetPasswordFields, resetPasswordCode, 6);
+        addFormItem(resetPasswordFields, wrappedLabel(
+            "Kata sandi baru (8+ karakter, huruf besar-kecil, angka, simbol)"), 6);
+        addFormItem(resetPasswordFields, resetPasswordNew, 6);
+        addFormItem(resetPasswordFields, label("Ulangi kata sandi baru"), 6);
+        addFormItem(resetPasswordFields, resetPasswordConfirm, 6);
+        addFormItem(resetPasswordFields, completePasswordResetButton, 6);
+        passwordResetForm = form;
+        addFormItem(form, resetPasswordMessage, 8);
+        addFormItem(form, cancelPasswordResetButton, 8);
         panel.add(form, BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel registerPanel() {
         JPanel panel = UI.glassPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
-        JPanel form = new JPanel(new GridLayout(0, 1, 6, 6));
-        form.setOpaque(false);
-        form.add(label("Daftar akun UMKM"));
-        form.add(label("Nama"));
-        form.add(registerName);
-        form.add(label("Email"));
-        form.add(registerEmail);
-        form.add(label("Kata sandi (8+ karakter, huruf besar-kecil, angka, simbol)"));
-        form.add(registerPassword);
-        form.add(label("Ulangi kata sandi"));
-        form.add(confirmPassword);
-        form.add(registerButton);
+        panel.setBorder(BorderFactory.createEmptyBorder(26, 30, 26, 30));
+        JPanel form = verticalForm();
+        addFormItem(form, label("Daftar akun UMKM"), 6);
+        addFormItem(form, label("Nama"), 6);
+        addFormItem(form, registerName, 6);
+        addFormItem(form, label("Email"), 6);
+        addFormItem(form, registerEmail, 6);
+        addFormItem(form, wrappedLabel("Kata sandi (8+ karakter, huruf besar-kecil, angka, simbol)"),
+            6);
+        addFormItem(form, registerPassword, 6);
+        addFormItem(form, passwordStrengthPanel(), 6);
+        addFormItem(form, label("Ulangi kata sandi"), 6);
+        addFormItem(form, confirmPassword, 6);
+        addFormItem(form, registerButton, 6);
         panel.add(form, BorderLayout.CENTER);
         return panel;
     }
 
+    private JPanel verticalForm() {
+        JPanel form = new JPanel();
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setOpaque(false);
+        return form;
+    }
+
+    private void addFormItem(JPanel form, JComponent component, int gap) {
+        component.setAlignmentX(Component.LEFT_ALIGNMENT);
+        form.add(component);
+        form.add(Box.createVerticalStrut(gap));
+    }
+
+    private JPanel passwordStrengthPanel() {
+        JPanel meter = new JPanel(new BorderLayout(0, 5));
+        meter.setOpaque(false);
+        passwordStrengthLabel.setForeground(UI.TEXT_MUTED);
+        passwordStrengthLabel.setFont(new Font(UI.FONT, Font.BOLD, 12));
+        passwordStrengthBar.setBorderPainted(false);
+        passwordStrengthBar.setStringPainted(false);
+        passwordStrengthBar.setPreferredSize(new Dimension(0, 9));
+        passwordStrengthBar.setBackground(UI.GLASS_BORDER);
+        passwordStrengthBar.setForeground(UI.ACCENT);
+        JLabel requirements = label("Min. 8 karakter, huruf besar-kecil, angka, dan simbol.");
+        requirements.setForeground(UI.TEXT_MUTED);
+        requirements.setFont(new Font(UI.FONT, Font.PLAIN, 11));
+
+        JPanel barAndRequirements = new JPanel(new BorderLayout(0, 5));
+        barAndRequirements.setOpaque(false);
+        barAndRequirements.add(passwordStrengthBar, BorderLayout.NORTH);
+        barAndRequirements.add(requirements, BorderLayout.SOUTH);
+        meter.add(passwordStrengthLabel, BorderLayout.NORTH);
+        meter.add(barAndRequirements, BorderLayout.CENTER);
+        return meter;
+    }
+
+    private void updatePasswordStrength() {
+        char[] password = registerPassword.getPassword();
+        int score = passwordCriteriaScore(password);
+        java.util.Arrays.fill(password, '\0');
+
+        passwordStrengthBar.setValue(score);
+        if (score == 0) {
+            passwordStrengthLabel.setText("Kekuatan kata sandi: Belum diisi");
+            passwordStrengthBar.setForeground(UI.GLASS_BORDER);
+        } else {
+            String level = passwordStrengthLevel(score);
+            passwordStrengthLabel.setText("Kekuatan kata sandi: " + level
+                + " (" + score + "/5 syarat)");
+            passwordStrengthBar.setForeground(score <= 2 ? UI.ACCENT
+                : score == 5 ? UI.GREEN : UI.AMBER);
+        }
+    }
+
     private JLabel label(String text) {
         JLabel label = new JLabel(text);
+        label.setForeground(UI.TEXT_LIGHT);
+        return label;
+    }
+
+    private JLabel wrappedLabel(String text) {
+        JLabel label = UI.htmlLabel("<html><div style='width:340px'>" + text
+            + "</div></html>");
         label.setForeground(UI.TEXT_LIGHT);
         return label;
     }
@@ -260,7 +383,21 @@ public class AuthFrame extends JFrame {
                     Thread.currentThread().interrupt();
                     showError(ex);
                 } catch (ExecutionException ex) {
-                    showError(ex.getCause());
+                    Throwable cause = ex.getCause();
+                    if (registrationMayHaveCompleted(cause)) {
+                        showVerification(email);
+                        verificationMessage.setText("<html><div style='text-align:center'>"
+                            + "Supabase mengalami timeout. Akun mungkin sudah tercatat; "
+                            + "periksa email dan folder spam. Jika belum ada kode, gunakan "
+                            + "Kirim ulang email.</div></html>");
+                        JOptionPane.showMessageDialog(AuthFrame.this,
+                            "Supabase timeout saat mendaftar. Jangan mendaftar ulang dulu: "
+                                + "akun mungkin sudah dibuat. Periksa Authentication → Users "
+                                + "dan email Anda, atau kirim ulang kode verifikasi.",
+                            "Pendaftaran belum terkonfirmasi", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        showError(cause);
+                    }
                 }
             }
         }.execute();
@@ -287,11 +424,14 @@ public class AuthFrame extends JFrame {
                 setBusy(false);
                 try {
                     get();
-                    resetPasswordFields.setVisible(true);
+                    if (resetPasswordFields.getParent() == null) {
+                        passwordResetForm.add(resetPasswordFields, 5);
+                    }
                     resetPasswordMessage.setText("<html><div style='text-align:center'>"
                         + "Jika email terdaftar, kode 6 angka akan dikirim. Periksa juga "
                         + "folder spam.</div></html>");
-                    pack();
+                    revalidate();
+                    repaint();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     showError(ex);
@@ -336,8 +476,10 @@ public class AuthFrame extends JFrame {
                     resetPasswordCode.setText("");
                     resetPasswordNew.setText("");
                     resetPasswordConfirm.setText("");
-                    resetPasswordFields.setVisible(false);
+                    passwordResetForm.remove(resetPasswordFields);
                     resetPasswordMessage.setText("Kata sandi berhasil diubah. Silakan masuk.");
+                    revalidate();
+                    repaint();
                     showLogin();
                     JOptionPane.showMessageDialog(AuthFrame.this,
                         "Kata sandi berhasil diubah. Silakan masuk dengan kata sandi baru.");
@@ -411,12 +553,12 @@ public class AuthFrame extends JFrame {
         verificationCode.setText("");
         verificationMessage.setText("<html><div style='text-align:center'>Email verifikasi "
             + "berisi kode 6 angka telah diminta untuk <b>" + email + "</b>.</div></html>");
-        cards.show(cardPanel, "verification");
+        showCard("verification");
         tabs.setVisible(false);
     }
 
     private void showLogin() {
-        cards.show(cardPanel, "login");
+        showCard("login");
         tabs.setVisible(true);
     }
 
@@ -425,10 +567,16 @@ public class AuthFrame extends JFrame {
         resetPasswordCode.setText("");
         resetPasswordNew.setText("");
         resetPasswordConfirm.setText("");
-        resetPasswordFields.setVisible(false);
+        passwordResetForm.remove(resetPasswordFields);
         resetPasswordMessage.setText("");
-        cards.show(cardPanel, "password-reset");
+        showCard("password-reset");
         tabs.setVisible(false);
+    }
+
+    private void showCard(String name) {
+        cards.show(cardPanel, name);
+        cardPanel.revalidate();
+        cardPanel.repaint();
     }
 
     private static boolean isValidEmail(String email) {
@@ -441,7 +589,11 @@ public class AuthFrame extends JFrame {
     }
 
     private static boolean isStrongPassword(char[] password) {
-        if (password.length < 8) return false;
+        return passwordCriteriaScore(password) == 5;
+    }
+
+    static int passwordCriteriaScore(char[] password) {
+        boolean minimumLength = password.length >= 8;
         boolean uppercase = false;
         boolean lowercase = false;
         boolean digit = false;
@@ -452,11 +604,38 @@ public class AuthFrame extends JFrame {
             digit |= Character.isDigit(character);
             symbol |= !Character.isLetterOrDigit(character) && !Character.isWhitespace(character);
         }
-        return uppercase && lowercase && digit && symbol;
+        int score = 0;
+        if (minimumLength) score++;
+        if (uppercase) score++;
+        if (lowercase) score++;
+        if (digit) score++;
+        if (symbol) score++;
+        return score;
+    }
+
+    static String passwordStrengthLevel(int score) {
+        if (score <= 1) return "Sangat lemah";
+        if (score == 2) return "Lemah";
+        if (score < 5) return "Kuat";
+        return "Sangat kuat";
     }
 
     private static boolean isSixDigitCode(String code) {
         return code != null && code.matches("[0-9]{6}");
+    }
+
+    private static boolean registrationMayHaveCompleted(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.net.SocketTimeoutException) return true;
+            String message = cause.getMessage();
+            if (message != null && (message.contains("HTTP 504")
+                    || message.toLowerCase(java.util.Locale.ROOT).contains("gateway timeout")
+                    || message.toLowerCase(java.util.Locale.ROOT)
+                        .contains("melewati batas waktu saat mendaftar"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void openAccount(final AuthSession session) {

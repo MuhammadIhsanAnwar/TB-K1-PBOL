@@ -6,15 +6,15 @@ import javax.swing.table.DefaultTableModel;
 
 public class ArusKasPanel extends JPanel {
     public ArusKasPanel(MainFrame f) {
-        setLayout(new BorderLayout(16, 16));
+        setLayout(new BorderLayout(18, 18));
         setBackground(UI.BG_DARK);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
         
         add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Prediksi Arus Kas</h1><font color='#C8D0FF'>Perkirakan posisi kas dari asumsi pemasukan dan pengeluaran.</font></html>"), BorderLayout.NORTH);
         
         JPanel input = UI.glassPanel();
-        input.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        input.setBorder(BorderFactory.createEmptyBorder(22, 24, 22, 24));
         
         WorkspaceData.CashFlowSettings saved = f.workspace.cashFlow;
         JTextField saldo = UI.input(String.valueOf(saved.startingBalance));
@@ -40,6 +40,8 @@ public class ArusKasPanel extends JPanel {
         
         JLabel saldoAkhir = new JLabel("Saldo akhir: -");
         saldoAkhir.setForeground(UI.TEXT_LIGHT);
+        saldoAkhir.setFont(new Font(UI.FONT, Font.BOLD, 16));
+        saldoAkhir.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
 
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setOpaque(false);

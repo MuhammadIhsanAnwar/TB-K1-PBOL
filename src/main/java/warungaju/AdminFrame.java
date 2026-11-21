@@ -39,19 +39,20 @@ public class AdminFrame extends JFrame {
     public AdminFrame(SupabaseClient client, AuthSession session, AppUser user) {
         this.client = client;
         this.session = session;
-        setTitle("WARUNGAJU - Super Admin");
+        setTitle("Warung Aju - Super Admin");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(1000, 680);
+        setSize(1240, 780);
+        setMinimumSize(new java.awt.Dimension(1080, 660));
         setLocationRelativeTo(null);
 
-        JPanel root = new JPanel(new BorderLayout(16, 16));
-        root.setBorder(BorderFactory.createEmptyBorder(24, 28, 24, 28));
+        JPanel root = new JPanel(new BorderLayout(20, 20));
+        root.setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
         root.setBackground(UI.BG_DARK);
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         JLabel title = UI.htmlLabel("<html><h1 style='color:#DFFF00'>Panel Super Admin</h1>"
-            + "<font color='#C8D0FF'>Semua akun terdaftar di WARUNGAJU</font></html>");
+            + "<font color='#C8D0FF'>Semua akun terdaftar di Warung Aju</font></html>");
         title.setFont(new Font(UI.FONT, Font.PLAIN, 14));
         header.add(title, BorderLayout.WEST);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));

@@ -79,7 +79,7 @@ public class SupabaseJdbcServer {
         server.setExecutor(Executors.newFixedThreadPool(8));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
         server.start();
-        System.out.println("WARUNGAJU JDBC API listening on " + bindAddress + ":" + port);
+        System.out.println("Warung Aju JDBC API listening on " + bindAddress + ":" + port);
     }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -98,7 +98,7 @@ public class SupabaseJdbcServer {
             }
             sendError(exchange, 500, "Operasi database gagal.");
         } catch (IOException ex) {
-            System.err.println("WARUNGAJU API request failed: " + ex.getMessage());
+            System.err.println("Warung Aju API request failed: " + ex.getMessage());
             sendError(exchange, 502, "Backend atau Supabase Auth tidak dapat dijangkau.");
         } finally {
             exchange.close();

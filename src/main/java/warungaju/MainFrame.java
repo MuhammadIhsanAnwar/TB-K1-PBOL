@@ -48,9 +48,9 @@ public class MainFrame extends JFrame {
         transaksi.addAll(workspace.toTransactions());
         produk.addAll(workspace.toProducts());
         actualDataImported = workspace.actualDataImported;
-        setTitle("WARUNGAJU - Perencanaan dan Simulasi Keuangan UMKM");
-        setSize(1280, 800);
-        setMinimumSize(new Dimension(980, 650));
+        setTitle("Warung Aju - Perencanaan dan Simulasi Keuangan UMKM");
+        setSize(1360, 860);
+        setMinimumSize(new Dimension(1040, 700));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         build();
@@ -62,7 +62,6 @@ public class MainFrame extends JFrame {
         pageContainer.setBackground(UI.BG_DARK);
         navButtons.clear();
 
-        // Latar polos: lingkaran glow di belakang sudah dihapus.
         JPanel root = new JPanel(new BorderLayout());
         root.setOpaque(true);
         root.setBackground(UI.BG_DARK);
@@ -94,7 +93,7 @@ public class MainFrame extends JFrame {
         p.setBackground(UI.GLASS_LIGHT);
         p.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, UI.GLASS_BORDER),
-            BorderFactory.createEmptyBorder(12, 24, 12, 24)
+            BorderFactory.createEmptyBorder(14, 28, 14, 28)
         ));
 
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
@@ -110,17 +109,17 @@ public class MainFrame extends JFrame {
                 super.paintComponent(g);
             }
         };
-        mark.setPreferredSize(new Dimension(36, 36));
+        mark.setPreferredSize(new Dimension(40, 40));
         mark.setOpaque(false);
         mark.setForeground(UI.BUTTON_TEXT);
         mark.setFont(new Font(UI.FONT, Font.BOLD, 20));
         JPanel name = new JPanel();
         name.setOpaque(false);
         name.setLayout(new BoxLayout(name, BoxLayout.Y_AXIS));
-        JLabel title = new JLabel("WARUNGAJU");
-        title.setFont(new Font(UI.FONT, Font.BOLD, 17));
+        JLabel title = new JLabel("Warung Aju");
+        title.setFont(new Font(UI.FONT, Font.BOLD, 18));
         title.setForeground(UI.TEXT_LIGHT);
-        JLabel subtitle = new JLabel("Pembukuan warung");
+        JLabel subtitle = new JLabel("Pembukuan dan perencanaan UMKM");
         subtitle.setFont(new Font(UI.FONT, Font.PLAIN, 11));
         subtitle.setForeground(UI.TEXT_MUTED);
         name.add(title);
@@ -133,6 +132,7 @@ public class MainFrame extends JFrame {
         JLabel accountName = new JLabel((user.fullName == null || user.fullName.trim().isEmpty()
             ? user.email : user.fullName) + "  /  UMKM");
         accountName.setForeground(UI.TEXT_MUTED);
+        accountName.setFont(new Font(UI.FONT, Font.BOLD, 13));
         JButton logout = UI.secondaryButton("Keluar");
         logout.addActionListener(event -> logout());
         JButton accountButton = UI.secondaryButton("Akun");
@@ -151,25 +151,35 @@ public class MainFrame extends JFrame {
 
     private JPanel sidebar() {
         JPanel p = new JPanel();
-        p.setPreferredSize(new Dimension(230, 0));
+        p.setPreferredSize(new Dimension(250, 0));
         p.setOpaque(true);
         p.setBackground(UI.SIDEBAR_BG);
-        p.setBorder(BorderFactory.createEmptyBorder(16, 0, 16, 0));
+        p.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 0, 1, UI.GLASS_BORDER),
+            BorderFactory.createEmptyBorder(22, 12, 18, 12)));
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
-        String[] menus = {"Dashboard", "Transaksi", "Produk dan HPP", "Simulasi Bisnis", "Prediksi Arus Kas", "Laporan Keuangan"};
+        JLabel section = new JLabel("RUANG KERJA");
+        section.setForeground(UI.TEXT_MUTED);
+        section.setFont(new Font(UI.FONT, Font.BOLD, 11));
+        section.setBorder(BorderFactory.createEmptyBorder(0, 12, 14, 0));
+        section.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.add(section);
+
+        String[] menus = {"Dashboard", "Transaksi", "Produk dan HPP", "Simulasi Bisnis",
+            "Prediksi Arus Kas", "Laporan Keuangan"};
 
         for (final String menu : menus) {
             JButton b = UI.navButton(menu);
             b.setAlignmentX(Component.LEFT_ALIGNMENT);
-            b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+            b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
             b.addActionListener(e -> {
                 showPage(menu);
             });
             navButtons.put(menu, b);
             UI.setNavActive(b, menu.equals(currentPage));
             p.add(b);
-            p.add(Box.createVerticalStrut(2));
+            p.add(Box.createVerticalStrut(5));
         }
         return p;
     }

@@ -28,16 +28,20 @@ public class TransaksiPanel extends JPanel {
 
     public TransaksiPanel(MainFrame f) {
         this.f = f;
-        setLayout(new BorderLayout(16, 16));
+        setLayout(new BorderLayout(18, 18));
         setBackground(UI.BG_DARK);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
 
         JPanel top = new JPanel(new BorderLayout(12, 12));
         top.setOpaque(false);
-        top.add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Transaksi</h1><font color='#C8D0FF'>Catat dan kelola arus uang usaha</font></html>"), BorderLayout.NORTH);
+        JPanel heading = new JPanel(new BorderLayout(18, 0));
+        heading.setOpaque(false);
+        heading.add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Transaksi</h1>"
+            + "<font color='#C8D0FF'>Catat dan kelola arus uang usaha</font></html>"),
+            BorderLayout.CENTER);
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         actions.setOpaque(false);
         JButton add = UI.button("Tambah Transaksi");
         JButton edit = UI.secondaryButton("Ubah");
@@ -51,7 +55,8 @@ public class TransaksiPanel extends JPanel {
         actions.add(imp);
 
         JTextField search = UI.input("");
-        actions.add(UI.searchBar(search, "Cari keterangan atau kategori"));
+        heading.add(UI.searchBar(search, "Cari kategori atau keterangan"), BorderLayout.EAST);
+        top.add(heading, BorderLayout.NORTH);
         top.add(actions, BorderLayout.CENTER);
         add(top, BorderLayout.NORTH);
 

@@ -37,6 +37,34 @@ public class SupabaseClient {
         this.publishableKey = publishableKey;
     }
 
+    ConnectionCheck checkConnection() throws IOException {
+        HttpURLConnection connection =
+            (HttpURLConnection) new URL(baseUrl + "/auth/v1/health").openConnection();
+        long startedAt = System.nanoTime();
+        try {
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            connection.setRequestProperty("apikey", publishableKey);
+            connection.setRequestProperty("Accept", "application/json");
+            int status = connection.getResponseCode();
+            long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000L;
+            return new ConnectionCheck(status, elapsedMillis);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    static final class ConnectionCheck {
+        final int httpStatus;
+        final long elapsedMillis;
+
+        ConnectionCheck(int httpStatus, long elapsedMillis) {
+            this.httpStatus = httpStatus;
+            this.elapsedMillis = elapsedMillis;
+        }
+    }
+
     public AuthSession signIn(String email, String password) throws IOException {
         JsonObject body = new JsonObject();
         body.addProperty("email", email.trim());

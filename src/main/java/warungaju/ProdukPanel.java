@@ -28,22 +28,22 @@ public class ProdukPanel extends JPanel {
 
         this.f = f;
 
-        setLayout(new BorderLayout(16, 16));
+        setLayout(new BorderLayout(18, 18));
         setBackground(UI.BG_DARK);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(30, 35, 35, 35));
+        setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
 
 
         // Bagian atas: judul + tombol aksi + kolom pencarian
         JPanel top = new JPanel(new BorderLayout(12, 12));
         top.setOpaque(false);
+        JPanel heading = new JPanel(new BorderLayout(18, 0));
+        heading.setOpaque(false);
+        heading.add(UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Produk dan HPP</h1>"
+            + "<font color='#C8D0FF'>Kelola produk, biaya, dan margin keuntungan</font></html>"),
+            BorderLayout.CENTER);
 
-        top.add(
-            UI.htmlLabel("<html><h1 style='color:#FFFFF0'>Produk dan HPP</h1><font color='#C8D0FF'>Kelola produk, biaya, dan margin keuntungan</font></html>"),
-            BorderLayout.NORTH
-        );
-
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         actions.setOpaque(false);
 
         JButton btnTambah = UI.button("Tambah Produk");
@@ -53,14 +53,14 @@ public class ProdukPanel extends JPanel {
         JButton btnKurangiStok = UI.secondaryButton("Kurangi Stok");
 
         JTextField txtCari = UI.input("");
+        heading.add(UI.searchBar(txtCari, "Cari nama produk"), BorderLayout.EAST);
 
         actions.add(btnTambah);
         actions.add(btnEdit);
         actions.add(btnHapus);
         actions.add(btnTambahStok);
         actions.add(btnKurangiStok);
-        actions.add(UI.searchBar(txtCari, "Cari nama produk"));
-
+        top.add(heading, BorderLayout.NORTH);
         top.add(actions, BorderLayout.CENTER);
         add(top, BorderLayout.NORTH);
 

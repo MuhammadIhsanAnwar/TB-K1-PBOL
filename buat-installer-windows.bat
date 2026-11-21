@@ -26,7 +26,7 @@ if not defined WIX_BIN (
 REM Tambahkan WiX hanya ke PATH proses ini; tidak mengubah PATH permanen Windows.
 set "PATH=%WIX_BIN%;%PATH%"
 
-if exist "target\installer\WARUNGAJU-1.0.0.exe" (
+if exist "target\installer\Warung Aju-1.0.0.exe" (
     echo Installer lama ditemukan di target\installer.
     echo Pindahkan atau hapus installer lama sebelum membuat ulang.
     exit /b 1
@@ -48,16 +48,16 @@ if errorlevel 1 (
 
 jpackage ^
     --type exe ^
-    --name WARUNGAJU ^
+    --name "Warung Aju" ^
     --app-version 1.0.0 ^
-    --vendor WARUNGAJU ^
+    --vendor "Warung Aju" ^
     --description "Aplikasi perencanaan keuangan UMKM" ^
     --input target\jpackage-input ^
     --main-jar warungaju.jar ^
     --main-class warungaju.Main ^
     --dest target\installer ^
     --win-menu ^
-    --win-menu-group WARUNGAJU ^
+    --win-menu-group "Warung Aju" ^
     --win-shortcut ^
     --win-dir-chooser ^
     --win-per-user-install
@@ -66,4 +66,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Installer tersedia di target\installer\WARUNGAJU-1.0.0.exe
+echo Installer tersedia di target\installer\Warung Aju-1.0.0.exe

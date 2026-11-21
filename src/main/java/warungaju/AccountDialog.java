@@ -22,7 +22,7 @@ public class AccountDialog extends JDialog {
 
     private final MainFrame owner;
     private final Runnable onProfileChanged;
-    private final JTextField nameField = new JTextField();
+    private final JTextField nameField = UI.input("");
     private final JPasswordField newPassword = new JPasswordField();
     private final JPasswordField confirmPassword = new JPasswordField();
     private final JButton saveNameButton = UI.button("Simpan Nama");
@@ -36,9 +36,9 @@ public class AccountDialog extends JDialog {
         nameField.setText(owner.user.fullName == null ? "" : owner.user.fullName);
 
         JPanel root = new JPanel(new BorderLayout());
-        root.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        root.setBorder(BorderFactory.createEmptyBorder(28, 30, 28, 30));
         root.setBackground(UI.BG_DARK);
-        JPanel form = new JPanel(new GridLayout(0, 1, 6, 6));
+        JPanel form = new JPanel(new GridLayout(0, 1, 9, 9));
         form.setOpaque(false);
         form.add(label("Email: " + owner.user.email));
         form.add(label("Nama"));
@@ -53,7 +53,8 @@ public class AccountDialog extends JDialog {
         form.add(deleteButton);
         root.add(form, BorderLayout.CENTER);
         setContentPane(root);
-        setSize(420, 520);
+        setSize(480, 600);
+        setMinimumSize(new java.awt.Dimension(440, 560));
         setLocationRelativeTo(owner);
 
         saveNameButton.addActionListener(event -> saveName());

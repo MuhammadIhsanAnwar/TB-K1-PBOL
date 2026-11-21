@@ -1,14 +1,14 @@
 package warungaju;
 
 import javax.swing.SwingUtilities;
-import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            FlatDarkLaf.setup();
+            FlatLightLaf.setup();
             UI.initTheme();
-            new AuthFrame().setVisible(true);
+            new StartupFrame().setVisible(true);
         });
     }
 }

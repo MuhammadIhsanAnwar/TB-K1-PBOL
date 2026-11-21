@@ -38,6 +38,17 @@ class SupabaseClientTest {
     }
 
     @Test
+    void connectionCheckMeasuresSupabaseHealthRequest() throws Exception {
+        SupabaseClient.ConnectionCheck result = client.checkConnection();
+
+        assertEquals(204, result.httpStatus);
+        assertTrue(result.elapsedMillis >= 0);
+        assertEquals("/auth/v1/health", requests.get(0).path);
+        assertEquals("GET", requests.get(0).method);
+        assertEquals("test-publishable-key", requests.get(0).apiKey);
+    }
+
+    @Test
     void profileReadUsesPostgrestAndTheSignedInUserToken() throws Exception {
         AppUser profile = client.getProfile(session());
 
@@ -124,6 +135,23 @@ class SupabaseClientTest {
     }
 
     @Test
+    void signupRequestsOtpFromSupabaseWithoutHandlingOtpInJava() throws Exception {
+        AuthSession session = client.signUp("Pemilik Usaha", "pemilik@example.id",
+            "StrongPassword123!");
+
+        assertEquals(null, session);
+        Request request = requests.get(0);
+        assertEquals("POST", request.method);
+        assertEquals("/auth/v1/signup", request.path);
+        assertEquals("test-publishable-key", request.apiKey);
+        assertEquals(null, request.authorization);
+        JsonObject body = JsonParser.parseString(request.body).getAsJsonObject();
+        assertEquals("pemilik@example.id", body.get("email").getAsString());
+        assertEquals("StrongPassword123!", body.get("password").getAsString());
+        assertEquals("Pemilik Usaha", body.getAsJsonObject("data").get("nama").getAsString());
+    }
+
+    @Test
     void signupAndRecoveryCodesAreVerifiedUsingSupabaseOtpEndpoint() throws Exception {
         client.verifyEmailOtp("pemilik@example.id", "123456", "signup");
         client.verifyEmailOtp("pemilik@example.id", "654321", "recovery");
@@ -147,7 +175,10 @@ class SupabaseClientTest {
         String body = readBody(exchange);
         requests.add(new Request(exchange, body));
         String path = exchange.getRequestURI().getPath();
-        if ("/auth/v1/verify".equals(path)) {
+        if ("/auth/v1/signup".equals(path)) {
+            respond(exchange, 200, "{\"user\":{\"id\":\"" + USER_ID
+                + "\",\"email\":\"pemilik@example.id\"},\"session\":null}");
+        } else if ("/auth/v1/verify".equals(path)) {
             respond(exchange, 200, "{\"access_token\":\"verified-access-token\","
                 + "\"refresh_token\":\"verified-refresh-token\",\"expires_in\":3600,"
                 + "\"user\":{\"id\":\"" + USER_ID
