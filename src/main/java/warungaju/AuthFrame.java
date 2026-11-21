@@ -26,6 +26,11 @@ public class AuthFrame extends JFrame {
     private final JPanel cardPanel = new JPanel(cards);
     private final JTextField loginEmail = UI.input("");
     private final JPasswordField loginPassword = new JPasswordField();
+    private final JTextField resetPasswordEmail = UI.input("");
+    private final JTextField resetPasswordCode = UI.input("");
+    private final JPasswordField resetPasswordNew = new JPasswordField();
+    private final JPasswordField resetPasswordConfirm = new JPasswordField();
+    private final JTextField verificationCode = UI.input("");
     private final JTextField registerName = UI.input("");
     private final JTextField registerEmail = UI.input("");
     private final JPasswordField registerPassword = new JPasswordField();
@@ -35,11 +40,18 @@ public class AuthFrame extends JFrame {
     private final JButton showLoginButton = UI.secondaryButton("Masuk");
     private final JButton showRegisterButton = UI.secondaryButton("Daftar");
     private final JButton forgotPasswordButton = UI.secondaryButton("Lupa kata sandi?");
+    private final JButton sendPasswordResetButton = UI.button("Kirim Kode Reset");
+    private final JButton completePasswordResetButton =
+        UI.button("Verifikasi Kode dan Ubah Kata Sandi");
+    private final JButton cancelPasswordResetButton = UI.secondaryButton("Kembali ke Masuk");
+    private final JButton verifySignupButton = UI.button("Verifikasi Email");
     private final JButton resendVerificationButton = UI.secondaryButton("Kirim ulang email");
     private final JButton returnToLoginButton = UI.button("Kembali ke masuk");
     private final JPanel tabs = new JPanel(new GridLayout(1, 2, 8, 0));
     private final JLabel verificationMessage = new JLabel("", JLabel.CENTER);
+    private final JLabel resetPasswordMessage = new JLabel("", JLabel.CENTER);
     private String pendingVerificationEmail;
+    private JPanel resetPasswordFields;
 
     public AuthFrame() {
         setTitle("WARUNGAJU - Masuk");
@@ -57,10 +69,14 @@ public class AuthFrame extends JFrame {
         root.add(title, BorderLayout.NORTH);
 
         loginEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
+        resetPasswordEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
+        resetPasswordCode.putClientProperty("JTextField.placeholderText", "Kode 6 angka");
+        verificationCode.putClientProperty("JTextField.placeholderText", "Kode 6 angka");
         registerEmail.putClientProperty("JTextField.placeholderText", "nama@usaha.id");
         registerName.putClientProperty("JTextField.placeholderText", "Nama pemilik atau usaha");
         cardPanel.setOpaque(false);
         cardPanel.add(loginPanel(), "login");
+        cardPanel.add(passwordResetPanel(), "password-reset");
         cardPanel.add(registerPanel(), "register");
         cardPanel.add(verificationPanel(), "verification");
         root.add(cardPanel, BorderLayout.CENTER);
@@ -73,7 +89,11 @@ public class AuthFrame extends JFrame {
 
         loginButton.addActionListener(event -> signIn());
         registerButton.addActionListener(event -> signUp());
-        forgotPasswordButton.addActionListener(event -> sendPasswordReset());
+        forgotPasswordButton.addActionListener(event -> showPasswordReset());
+        sendPasswordResetButton.addActionListener(event -> sendPasswordReset());
+        completePasswordResetButton.addActionListener(event -> completePasswordReset());
+        cancelPasswordResetButton.addActionListener(event -> showLogin());
+        verifySignupButton.addActionListener(event -> verifySignup());
         resendVerificationButton.addActionListener(event -> resendVerification());
         returnToLoginButton.addActionListener(event -> showLogin());
         showLoginButton.addActionListener(event -> showLogin());
@@ -107,10 +127,41 @@ public class AuthFrame extends JFrame {
         content.add(label("Periksa kotak masuk Anda"));
         verificationMessage.setForeground(UI.TEXT_MUTED);
         content.add(verificationMessage);
-        content.add(label("Buka tautan verifikasi dari WARUNGAJU sebelum masuk."));
+        content.add(label("Masukkan kode 6 angka dari email verifikasi."));
+        content.add(verificationCode);
+        content.add(verifySignupButton);
         content.add(resendVerificationButton);
         content.add(returnToLoginButton);
         panel.add(content, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel passwordResetPanel() {
+        JPanel panel = UI.glassPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        JPanel form = new JPanel(new GridLayout(0, 1, 8, 8));
+        form.setOpaque(false);
+        resetPasswordMessage.setForeground(UI.TEXT_MUTED);
+        form.add(label("Atur ulang kata sandi"));
+        form.add(label("Masukkan email akun. Kami akan mengirimkan tautan untuk "
+            + "membuat kata sandi baru."));
+        form.add(label("Email"));
+        form.add(resetPasswordEmail);
+        form.add(sendPasswordResetButton);
+        resetPasswordFields = new JPanel(new GridLayout(0, 1, 8, 8));
+        resetPasswordFields.setOpaque(false);
+        resetPasswordFields.add(label("Kode 6 angka dari email"));
+        resetPasswordFields.add(resetPasswordCode);
+        resetPasswordFields.add(label("Kata sandi baru (8+ karakter, huruf besar-kecil, angka, simbol)"));
+        resetPasswordFields.add(resetPasswordNew);
+        resetPasswordFields.add(label("Ulangi kata sandi baru"));
+        resetPasswordFields.add(resetPasswordConfirm);
+        resetPasswordFields.add(completePasswordResetButton);
+        resetPasswordFields.setVisible(false);
+        form.add(resetPasswordFields);
+        form.add(resetPasswordMessage);
+        form.add(cancelPasswordResetButton);
+        panel.add(form, BorderLayout.CENTER);
         return panel;
     }
 
@@ -143,6 +194,7 @@ public class AuthFrame extends JFrame {
         final String email = loginEmail.getText().trim();
         final char[] enteredPassword = loginPassword.getPassword();
         if (!isValidEmail(email) || enteredPassword.length == 0) {
+            java.util.Arrays.fill(enteredPassword, '\0');
             JOptionPane.showMessageDialog(this, "Masukkan format email yang valid dan kata sandi.");
             return;
         }
@@ -195,8 +247,15 @@ public class AuthFrame extends JFrame {
                 java.util.Arrays.fill(enteredPassword, '\0');
                 setBusy(false);
                 try {
-                    get();
-                    showVerification(email);
+                    AuthSession session = get();
+                    if (session != null && session.emailVerified) {
+                        loginEmail.setText(email);
+                        showLogin();
+                        JOptionPane.showMessageDialog(AuthFrame.this,
+                            "Akun sudah dikonfirmasi oleh Supabase. Silakan masuk.");
+                    } else {
+                        showVerification(email);
+                    }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     showError(ex);
@@ -208,12 +267,13 @@ public class AuthFrame extends JFrame {
     }
 
     private void sendPasswordReset() {
-        final String email = loginEmail.getText().trim();
+        final String email = resetPasswordEmail.getText().trim();
         if (!isValidEmail(email)) {
-            JOptionPane.showMessageDialog(this, "Masukkan email akun yang valid terlebih dahulu.",
+            JOptionPane.showMessageDialog(this, "Masukkan format email akun yang valid.",
                 "Format email", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        resetPasswordMessage.setText("");
         setBusy(true);
         new SwingWorker<Void, Void>() {
             @Override
@@ -227,8 +287,88 @@ public class AuthFrame extends JFrame {
                 setBusy(false);
                 try {
                     get();
+                    resetPasswordFields.setVisible(true);
+                    resetPasswordMessage.setText("<html><div style='text-align:center'>"
+                        + "Jika email terdaftar, kode 6 angka akan dikirim. Periksa juga "
+                        + "folder spam.</div></html>");
+                    pack();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    showError(ex);
+                } catch (ExecutionException ex) {
+                    showError(ex.getCause());
+                }
+            }
+        }.execute();
+    }
+
+    private void completePasswordReset() {
+        final String email = resetPasswordEmail.getText().trim();
+        final String token = resetPasswordCode.getText().trim();
+        char[] enteredPassword = resetPasswordNew.getPassword();
+        char[] repeatedPassword = resetPasswordConfirm.getPassword();
+        boolean matches = java.util.Arrays.equals(enteredPassword, repeatedPassword);
+        java.util.Arrays.fill(repeatedPassword, '\0');
+        if (!isValidEmail(email) || !isSixDigitCode(token)
+                || !isStrongPassword(enteredPassword) || !matches) {
+            java.util.Arrays.fill(enteredPassword, '\0');
+            JOptionPane.showMessageDialog(this,
+                "Masukkan email valid, kode 6 angka yang benar, dan kata sandi kuat "
+                    + "yang sama pada kedua kolom.");
+            return;
+        }
+        final String newPassword = new String(enteredPassword);
+        java.util.Arrays.fill(enteredPassword, '\0');
+        setBusy(true);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                AuthSession session = client.verifyEmailOtp(email, token, "recovery");
+                client.changePassword(session, newPassword);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setBusy(false);
+                try {
+                    get();
+                    resetPasswordCode.setText("");
+                    resetPasswordNew.setText("");
+                    resetPasswordConfirm.setText("");
+                    resetPasswordFields.setVisible(false);
+                    resetPasswordMessage.setText("Kata sandi berhasil diubah. Silakan masuk.");
+                    showLogin();
                     JOptionPane.showMessageDialog(AuthFrame.this,
-                        "Jika email terdaftar, tautan untuk mengatur ulang kata sandi akan dikirim.");
+                        "Kata sandi berhasil diubah. Silakan masuk dengan kata sandi baru.");
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    showError(ex);
+                } catch (ExecutionException ex) {
+                    showError(ex.getCause());
+                }
+            }
+        }.execute();
+    }
+
+    private void verifySignup() {
+        final String token = verificationCode.getText().trim();
+        if (pendingVerificationEmail == null || !isSixDigitCode(token)) {
+            JOptionPane.showMessageDialog(this, "Masukkan kode verifikasi 6 angka dari email.");
+            return;
+        }
+        setBusy(true);
+        new SwingWorker<AuthSession, Void>() {
+            @Override
+            protected AuthSession doInBackground() throws Exception {
+                return client.verifyEmailOtp(pendingVerificationEmail, token, "signup");
+            }
+
+            @Override
+            protected void done() {
+                setBusy(false);
+                try {
+                    openAccount(get());
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     showError(ex);
@@ -268,8 +408,9 @@ public class AuthFrame extends JFrame {
 
     private void showVerification(String email) {
         pendingVerificationEmail = email;
+        verificationCode.setText("");
         verificationMessage.setText("<html><div style='text-align:center'>Email verifikasi "
-            + "telah diminta untuk <b>" + email + "</b>.</div></html>");
+            + "berisi kode 6 angka telah diminta untuk <b>" + email + "</b>.</div></html>");
         cards.show(cardPanel, "verification");
         tabs.setVisible(false);
     }
@@ -279,10 +420,24 @@ public class AuthFrame extends JFrame {
         tabs.setVisible(true);
     }
 
+    private void showPasswordReset() {
+        resetPasswordEmail.setText("");
+        resetPasswordCode.setText("");
+        resetPasswordNew.setText("");
+        resetPasswordConfirm.setText("");
+        resetPasswordFields.setVisible(false);
+        resetPasswordMessage.setText("");
+        cards.show(cardPanel, "password-reset");
+        tabs.setVisible(false);
+    }
+
     private static boolean isValidEmail(String email) {
-        return email != null && email.length() <= 254
-            && email.matches(EMAIL_PATTERN)
-            && email.indexOf("..") < 0;
+        if (email == null || email.length() > 254 || !email.matches(EMAIL_PATTERN)
+                || email.indexOf("..") >= 0) {
+            return false;
+        }
+        int at = email.indexOf('@');
+        return at > 0 && email.charAt(0) != '.' && email.charAt(at - 1) != '.';
     }
 
     private static boolean isStrongPassword(char[] password) {
@@ -298,6 +453,10 @@ public class AuthFrame extends JFrame {
             symbol |= !Character.isLetterOrDigit(character) && !Character.isWhitespace(character);
         }
         return uppercase && lowercase && digit && symbol;
+    }
+
+    private static boolean isSixDigitCode(String code) {
+        return code != null && code.matches("[0-9]{6}");
     }
 
     private void openAccount(final AuthSession session) {
@@ -343,6 +502,10 @@ public class AuthFrame extends JFrame {
         loginButton.setEnabled(!busy);
         registerButton.setEnabled(!busy);
         forgotPasswordButton.setEnabled(!busy);
+        sendPasswordResetButton.setEnabled(!busy);
+        completePasswordResetButton.setEnabled(!busy);
+        cancelPasswordResetButton.setEnabled(!busy);
+        verifySignupButton.setEnabled(!busy);
         resendVerificationButton.setEnabled(!busy);
         returnToLoginButton.setEnabled(!busy);
         showLoginButton.setEnabled(!busy);

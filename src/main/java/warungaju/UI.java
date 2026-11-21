@@ -100,7 +100,7 @@ class UI {
             SIDEBAR_ACTIVE = new Color(75, 53, 38);
             SIDEBAR_TEXT = new Color(211, 193, 169);
             SIDEBAR_ACTIVE_TEXT = new Color(255, 246, 230);
-            BUTTON_TEXT = Color.WHITE;
+            BUTTON_TEXT = new Color(43, 32, 25);
             INPUT_BG = new Color(64, 47, 35);
             ROW_ALT = new Color(50, 38, 30);
             HEADER_BG = new Color(66, 49, 37);

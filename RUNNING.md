@@ -111,99 +111,43 @@ Aplikasi dimulai dengan data contoh. Tambahkan produk terlebih dahulu sebelum me
 
 ## Cara cepat menjalankan di Windows
 
-Cara paling mudah, tanpa mengetik perintah:
-
-1. Buat file `.env` di folder proyek (sudah diabaikan git), berisi. Jika file
-   konfigurasi yang sudah ada bernama `env` tanpa titik, skrip backend juga
-   akan membacanya sebagai fallback:
-
-   ```text
-   WARUNGAJU_DB_URL=jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0
-   WARUNGAJU_DB_USER=postgres.<project-ref>
-   WARUNGAJU_DB_PASSWORD=<password-database>
-   WARUNGAJU_API_BIND=127.0.0.1
-   ```
-
-2. Double-click `1-jalankan-backend.bat`. Tunggu sampai muncul baris:
-
-   ```text
-   WARUNGAJU JDBC API listening on 127.0.0.1:8081
-   ```
-
-   Biarkan jendela ini terbuka. Jangan ditutup selama aplikasi dipakai.
-3. Double-click `2-jalankan-aplikasi.bat` di jendela lain. Jendela login muncul.
-
-Jika login gagal dengan pesan `Connection refused: getsockopt`, artinya backend
-belum jalan atau sudah tertutup. Ulangi langkah 2.
+Double-click `2-jalankan-aplikasi.bat`. Aplikasi mengakses Supabase Auth dan
+Data API langsung melalui HTTPS, jadi tidak perlu `.env` atau backend lokal.
+Komputer harus terhubung ke internet.
 
 ## Menjalankan lewat Maven
 
-Dua proses, dua terminal:
+Jalankan aplikasi desktop dengan satu perintah:
 
 ```powershell
-# Terminal 1 - backend database
-mvn exec:java -Pbackend
-
-# Terminal 2 - aplikasi desktop
 mvn exec:java
 ```
 
-Profil `-Pbackend` menggantikan perintah lama
-`mvn exec:java "-Dexec.mainClass=warungaju.SupabaseJdbcServer"`. Perintah lama
-tidak berfungsi karena `exec-maven-plugin` di `pom.xml` versi sebelumnya
-mengunci class utama ke `warungaju.Main`.
-
 ## Supabase dan akun online
 
-Aplikasi memakai Supabase Auth untuk pendaftaran/login. Operasi database
-dijalankan oleh layanan backend Java melalui PostgreSQL JDBC; aplikasi desktop
-mengirim access token ke backend, dan backend memvalidasinya ke Supabase Auth
-sebelum menjalankan transaksi dengan hak `authenticated` agar kebijakan RLS
-tetap berlaku. Driver PostgreSQL JDBC dikelola Maven dari `pom.xml`.
+Pendaftaran, login, reset password, profil, workspace, dan RPC akun menggunakan
+Supabase Auth/Data API secara langsung melalui HTTPS. Setiap permintaan data
+membawa publishable key dan access token pengguna; Supabase menerapkan Row
+Level Security (RLS). Tidak ada JDBC connection string atau alamat backend yang
+perlu diatur pada komputer pengguna.
 
-URL Supabase dan publishable key dapat diatur melalui `SUPABASE_URL` dan
-`SUPABASE_PUBLISHABLE_KEY`. Aplikasi desktop memakai backend lokal
-`http://127.0.0.1:8081` secara default; untuk backend yang telah di-deploy,
-atur `WARUNGAJU_API_URL` ke URL HTTPS layanan tersebut.
+Alamat URL dan publishable key Supabase tertanam sebagai konfigurasi publik
+aplikasi; tidak perlu diisi melalui environment variable.
+`SupabaseJdbcServer` dan PostgreSQL JDBC driver masih tersedia untuk penggunaan
+backend manual/legacy, tetapi bukan bagian dari alur aplikasi desktop ini.
 
 Sebelum aplikasi digunakan:
 
 1. Buka `src/main/resources/db/supabase/online_schema.sql` dan jalankan seluruh
-   isinya melalui **Supabase Dashboard → SQL Editor**. Ini membuat tabel
-   `public.users`, role, tabel workspace, sinkronisasi tanggal aktivitas dan
-   verifikasi, serta kebijakan Row Level Security.
-2. Dari dashboard Supabase, ambil connection string PostgreSQL dan kredensial
-   database untuk server tepercaya. Simpan hanya pada environment server, bukan
-   pada komputer klien atau repository. Untuk Supavisor transaction pooler,
-   gunakan URL seperti berikut dan sesuaikan host, project ref, serta password:
-
-   ```text
-   jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0
-   ```
-
-   Gunakan port **6543** (transaction pooler). Jika muncul error seperti
-   `remaining connection slots are reserved` atau pooler menolak koneksi, coba
-   port **5432** (direct connection) dengan host dan user yang sama. Port 5432
-   lebih cepat kehabisan slot koneksi, jadi pakai hanya sebagai cadangan.
-
-   Di PowerShell, atur variabel untuk proses backend (password dimasukkan
-   secara tersembunyi):
-
-   ```powershell
-   $env:WARUNGAJU_DB_URL = "jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0"
-   $env:WARUNGAJU_DB_USER = "postgres.<project-ref>"
-   $securePassword = Read-Host "Supabase database password" -AsSecureString
-   $env:WARUNGAJU_DB_PASSWORD = [Net.NetworkCredential]::new("", $securePassword).Password
-   $env:WARUNGAJU_API_BIND = "127.0.0.1"
-   mvn exec:java -Pbackend
-   ```
-
-   Backend harus dijalankan pada server tepercaya. Jika diakses dari internet,
-   pasang reverse proxy HTTPS dan firewall; jangan mengekspos listener HTTP
-   langsung. Password database tidak boleh dibundel bersama aplikasi desktop.
-3. Jalankan aplikasi desktop di terminal lain dengan `mvn exec:java`. Jika
-   backend berjalan pada host lain, atur `WARUNGAJU_API_URL` ke alamat HTTPS
-   backend sebelum menjalankan aplikasi.
+   isinya melalui **Supabase Dashboard → SQL Editor**. Skrip ini membuat tabel,
+   kebijakan RLS, trigger, dan fungsi RPC yang digunakan aplikasi.
+2. Pastikan **Data API** aktif dan schema `public` tersedia untuk Data API.
+   Jangan menonaktifkan grants atau kebijakan RLS yang dibuat oleh schema.
+3. Di pengaturan **Authentication → Providers → Email**, aktifkan **Confirm
+   email** agar Supabase mengirim tautan verifikasi. Jika `mailer_autoconfirm`
+   bernilai `true` pada `/auth/v1/settings`, akun otomatis dikonfirmasi dan
+   email verifikasi tidak dikirim. Konfigurasikan SMTP Supabase; password SMTP
+   hanya disimpan di dashboard.
 4. Daftarkan akun. Pendaftaran dari aplikasi selalu
    membuat role `umkm`; verifikasi email bila Supabase memintanya.
 5. Buat akun `warungaju@neoverse.my.id` di **Supabase Dashboard →
@@ -236,7 +180,9 @@ Sebelum aplikasi digunakan:
 
 6. Masuk kembali dengan akun tersebut untuk membuka panel Super Admin. Panel
    hanya menampilkan profil dengan `is_active = true`. Akun UMKM masuk ke
-   dashboard UMKM.
+   dashboard UMKM. Super Admin dapat mengganti kata sandinya melalui tombol
+   **Ubah Kata Sandi**; akun ber-role Super Admin tidak bisa dinonaktifkan atau
+   dihapus dari panel.
 
 Jika ingin membuat akun Super Admin baru, buat/invite akun terlebih dahulu
 melalui **Supabase Dashboard → Authentication → Users** agar kredensial dikelola
@@ -268,7 +214,9 @@ publishable key bersama access token hasil login.
 
 Pengaturan SMTP Supabase harus dilakukan di **Supabase Dashboard → Project
 Settings → Authentication → SMTP Settings** (nama menu dapat berbeda sedikit).
-Aktifkan custom SMTP dan masukkan:
+Konfirmasi bahwa **Confirm email** aktif di pengaturan provider Email, kemudian
+aktifkan custom SMTP dan masukkan. Pengaturan SMTP yang sama dipakai untuk email
+verifikasi dan email reset kata sandi:
 
 - Sender name: `WARUNGAJU`
 - Sender email: `warungaju@neoverse.my.id`
@@ -279,7 +227,8 @@ Aktifkan custom SMTP dan masukkan:
   source code, SQL, atau repository.
 
 Simpan pengaturan, pastikan domain email memiliki DNS/mail record yang valid,
-lalu uji pendaftaran dan pengiriman ulang email konfirmasi. Jika provider SMTP
+lalu uji pendaftaran, pengiriman ulang email konfirmasi, dan lupa kata sandi.
+Jika provider SMTP
 menolak koneksi port 465, periksa port submission TLS yang didukung provider
 email dan setel port yang sesuai di dashboard.
 
@@ -294,3 +243,7 @@ mengulangi pendaftaran sebelum memastikan apakah akun sudah terbentuk.
 Kredensial SMTP adalah rahasia server-side dan tidak boleh dimasukkan ke aplikasi
 desktop. Karena password mailbox sempat dibagikan di chat, ganti/rotasi password
 tersebut sebelum memasukkannya ke dashboard Supabase.
+
+Di layar login, **Lupa kata sandi?** membuka form tersendiri untuk memasukkan
+email akun. Aplikasi meminta Supabase mengirim tautan reset; pengiriman tetap
+bergantung pada konfigurasi SMTP dan template email Supabase.

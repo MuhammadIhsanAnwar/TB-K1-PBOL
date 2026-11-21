@@ -1,0 +1,5 @@
+# Created at 2026-11-20T23:05:44.206
+Boot Manifest-JAR contains absolute paths in classpath 'D:\0_Project_VS_Code\2. Pemrograman Berorientasi Objek Lanjutan\TB-K1-PBOL\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+

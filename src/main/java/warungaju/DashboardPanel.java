@@ -16,13 +16,16 @@ public class DashboardPanel extends JPanel {
         
         double in = f.laporan.pemasukan();
         double out = f.laporan.pengeluaran();
+        WorkspaceData.CashFlowSettings cashFlow = f.workspace.cashFlow;
+        double saldoProyeksi = new PrediksiArusKas(cashFlow.startingBalance,
+            cashFlow.monthlyIncome, cashFlow.monthlyExpenses, 3).hitung();
         
         JPanel cards = new JPanel(new GridLayout(1, 4, 16, 0));
         cards.setOpaque(false);
         cards.add(UI.card("Pemasukan tercatat", UI.money(in), UI.GREEN, () -> f.showPage("Transaksi")));
         cards.add(UI.card("Pengeluaran tercatat", UI.money(out), UI.RED, () -> f.showPage("Transaksi")));
         cards.add(UI.card("Selisih pemasukan", UI.money(in - out), UI.AMBER, () -> f.showPage("Simulasi Bisnis")));
-        cards.add(UI.card("Saldo kas tercatat", UI.money(in - out + 3500000), UI.ACCENT, () -> f.showPage("Prediksi Arus Kas")));
+        cards.add(UI.card("Perkiraan saldo 3 bulan", UI.money(saldoProyeksi), UI.ACCENT, () -> f.showPage("Prediksi Arus Kas")));
         
         JPanel center = new JPanel(new BorderLayout(15, 15));
         center.setOpaque(false);
@@ -34,9 +37,12 @@ public class DashboardPanel extends JPanel {
         JPanel activity = new JPanel(new BorderLayout(8, 8));
         activity.setOpaque(false);
         activity.add(UI.htmlLabel("<html><h2 style='color:#FFFFF0'>Aktivitas keuangan</h2><font color='#C8D0FF'>Data tersimpan pada ruang kerja akun ini.</font></html>"), BorderLayout.NORTH);
+        String kondisiKas = saldoProyeksi < 0 ? "Perlu perhatian" : "Positif";
         activity.add(UI.htmlLabel("<html><p style='color:#FFFFF0'><b>" + f.transaksi.size()
             + "</b> transaksi tercatat &nbsp; | &nbsp; Data aktual: " + status
-            + "</p><p style='color:#FFFFF0'>Prediksi arus kas 3 bulan: <font color='#DFFF00'><b>stabil</b></font></p></html>"), BorderLayout.CENTER);
+            + "</p><p style='color:#FFFFF0'>Proyeksi saldo: <font color='#DFFF00'><b>"
+            + kondisiKas + " (" + UI.money(saldoProyeksi) + ")</b></font></p></html>"),
+            BorderLayout.CENTER);
 
         JPanel shortcuts = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         shortcuts.setOpaque(false);

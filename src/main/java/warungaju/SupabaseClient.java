@@ -20,24 +20,21 @@ import java.util.List;
 public class SupabaseClient {
     private static final String DEFAULT_URL = "https://sisbkliywimhdygtimfx.supabase.co";
     private static final String DEFAULT_PUBLISHABLE_KEY = "sb_publishable_GXvWJfY75haUsaN7QEmVpg_o3Ux8x9a";
-    private static final String DEFAULT_API_URL = "http://127.0.0.1:8081";
+    private static final String PROFILE_COLUMNS =
+        "id,email,nama,role,is_active,last_active_at,created_at,verified_at";
     private static final int DEFAULT_TIMEOUT_MS = 12000;
     private static final int SIGN_UP_TIMEOUT_MS = 60000;
     private static final Gson GSON = new Gson();
     private final String baseUrl;
-    private final String apiUrl;
     private final String publishableKey;
 
     public SupabaseClient() {
-        String configuredUrl = System.getenv("SUPABASE_URL");
-        String configuredKey = System.getenv("SUPABASE_PUBLISHABLE_KEY");
-        String configuredApiUrl = System.getenv("WARUNGAJU_API_URL");
-        baseUrl = (configuredUrl == null || configuredUrl.trim().isEmpty()
-            ? DEFAULT_URL : configuredUrl.trim()).replaceAll("/+$", "");
-        apiUrl = (configuredApiUrl == null || configuredApiUrl.trim().isEmpty()
-            ? DEFAULT_API_URL : configuredApiUrl.trim()).replaceAll("/+$", "");
-        publishableKey = configuredKey == null || configuredKey.trim().isEmpty()
-            ? DEFAULT_PUBLISHABLE_KEY : configuredKey.trim();
+        this(DEFAULT_URL, DEFAULT_PUBLISHABLE_KEY);
+    }
+
+    SupabaseClient(String baseUrl, String publishableKey) {
+        this.baseUrl = baseUrl.replaceAll("/+$", "");
+        this.publishableKey = publishableKey;
     }
 
     public AuthSession signIn(String email, String password) throws IOException {
@@ -86,6 +83,18 @@ public class SupabaseClient {
         send("POST", "/auth/v1/recover", GSON.toJson(body), null);
     }
 
+    public AuthSession verifyEmailOtp(String email, String token, String type)
+            throws IOException {
+        if (!"signup".equals(type) && !"recovery".equals(type)) {
+            throw new IOException("Jenis verifikasi email tidak valid.");
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("email", email.trim());
+        body.addProperty("token", token.trim());
+        body.addProperty("type", type);
+        return sessionFrom(send("POST", "/auth/v1/verify", GSON.toJson(body), null));
+    }
+
     public void resendSignupVerification(String email) throws IOException {
         JsonObject body = new JsonObject();
         body.addProperty("type", "signup");
@@ -98,68 +107,147 @@ public class SupabaseClient {
     }
 
     public AppUser getProfile(AuthSession session) throws IOException {
-        return GSON.fromJson(sendApi("GET", "/api/profile", null, session), AppUser.class);
+        requireSession(session);
+        String path = "/rest/v1/users?id=eq." + encodeQueryValue(session.userId)
+            + "&select=" + PROFILE_COLUMNS;
+        JsonArray rows = arrayFrom(send("GET", path, null, session));
+        if (rows.size() == 0) {
+            throw new IOException("Profil akun tidak ditemukan atau tidak dapat diakses.");
+        }
+        return appUserFrom(rows.get(0));
     }
 
     public List<AppUser> getActiveProfiles(AuthSession session) throws IOException {
-        return profilesFrom(sendApi("GET", "/api/profiles?active=true", null, session));
+        requireSession(session);
+        String path = "/rest/v1/users?is_active=eq.true&select=" + PROFILE_COLUMNS
+            + "&order=created_at.desc";
+        return profilesFrom(send("GET", path, null, session));
     }
 
     public List<AppUser> getAllProfiles(AuthSession session) throws IOException {
-        return profilesFrom(sendApi("GET", "/api/profiles", null, session));
+        requireSession(session);
+        String path = "/rest/v1/users?select=" + PROFILE_COLUMNS + "&order=created_at.desc";
+        return profilesFrom(send("GET", path, null, session));
     }
 
-    private List<AppUser> profilesFrom(String response) {
-        JsonArray users = JsonParser.parseString(response).getAsJsonArray();
+    private List<AppUser> profilesFrom(String response) throws IOException {
+        JsonArray users = arrayFrom(response);
         List<AppUser> result = new ArrayList<>();
         for (JsonElement user : users) {
-            result.add(GSON.fromJson(user, AppUser.class));
+            result.add(appUserFrom(user));
         }
         return result;
     }
 
-    // --- Update / Delete akun. Database operations run in the JDBC backend. ---
+    private JsonArray arrayFrom(String response) throws IOException {
+        JsonElement parsed = JsonParser.parseString(response);
+        if (!parsed.isJsonArray()) {
+            throw new IOException("Respons Supabase tidak berisi daftar data yang valid.");
+        }
+        return parsed.getAsJsonArray();
+    }
+
+    private AppUser appUserFrom(JsonElement element) throws IOException {
+        if (!element.isJsonObject()) {
+            throw new IOException("Data profil dari Supabase tidak valid.");
+        }
+        JsonObject json = element.getAsJsonObject();
+        AppUser user = new AppUser();
+        user.id = stringValue(json, "id");
+        user.email = stringValue(json, "email");
+        user.fullName = stringValue(json, "nama");
+        user.role = stringValue(json, "role");
+        user.active = json.has("is_active") && !json.get("is_active").isJsonNull()
+            && json.get("is_active").getAsBoolean();
+        user.lastActiveAt = stringValue(json, "last_active_at");
+        user.createdAt = stringValue(json, "created_at");
+        user.verifiedAt = stringValue(json, "verified_at");
+        return user;
+    }
+
+    // --- Account operations use Supabase PostgREST RPC with the signed-in user's JWT. ---
 
     public void updateOwnName(AuthSession session, String fullName) throws IOException {
+        requireSession(session);
         JsonObject body = new JsonObject();
         body.addProperty("p_nama", fullName.trim());
-        sendApi("POST", "/api/account/update-name", GSON.toJson(body), session);
+        send("POST", "/rest/v1/rpc/update_own_profile", GSON.toJson(body), session);
     }
 
     public void changePassword(AuthSession session, String newPassword) throws IOException {
+        requireSession(session);
         JsonObject body = new JsonObject();
         body.addProperty("password", newPassword);
         send("PUT", "/auth/v1/user", GSON.toJson(body), session);
     }
 
     public void deleteOwnAccount(AuthSession session) throws IOException {
-        sendApi("POST", "/api/account/delete-own", "{}", session);
+        requireSession(session);
+        send("POST", "/rest/v1/rpc/delete_own_account", "{}", session);
     }
 
     public void setUserActive(AuthSession session, String userId, boolean active)
             throws IOException {
+        requireSession(session);
         JsonObject body = new JsonObject();
         body.addProperty("p_user_id", userId);
         body.addProperty("p_active", active);
-        sendApi("POST", "/api/account/set-active", GSON.toJson(body), session);
+        send("POST", "/rest/v1/rpc/admin_set_user_active", GSON.toJson(body), session);
     }
 
     public void deleteUser(AuthSession session, String userId) throws IOException {
+        requireSession(session);
         JsonObject body = new JsonObject();
         body.addProperty("p_user_id", userId);
-        sendApi("POST", "/api/account/delete-user", GSON.toJson(body), session);
+        send("POST", "/rest/v1/rpc/admin_delete_user", GSON.toJson(body), session);
     }
 
     public WorkspaceData loadWorkspace(AuthSession session) throws IOException {
-        WorkspaceData data = GSON.fromJson(
-            sendApi("GET", "/api/workspace", null, session), WorkspaceData.class);
+        requireSession(session);
+        String response = send("GET",
+            "/rest/v1/umkm_workspaces?select=payload&limit=1", null, session);
+        JsonArray rows = arrayFrom(response);
+        WorkspaceData data = new WorkspaceData();
+        if (!rows.isEmpty()) {
+            JsonElement row = rows.get(0);
+            if (!row.isJsonObject()) {
+                throw new IOException("Baris workspace dari Supabase tidak valid.");
+            }
+            JsonElement payload = row.getAsJsonObject().get("payload");
+            if (payload == null || payload.isJsonNull() || !payload.isJsonObject()) {
+                throw new IOException("Payload workspace dari Supabase tidak valid.");
+            }
+            data = GSON.fromJson(payload, WorkspaceData.class);
+        }
         if (data == null) data = new WorkspaceData();
         data.normalize();
         return data;
     }
 
     public void saveWorkspace(AuthSession session, WorkspaceData data) throws IOException {
-        sendApi("PUT", "/api/workspace", GSON.toJson(data), session);
+        requireSession(session);
+        if (data == null) {
+            throw new IOException("Data workspace tidak boleh kosong.");
+        }
+        JsonObject row = new JsonObject();
+        row.addProperty("user_id", session.userId);
+        row.add("payload", GSON.toJsonTree(data));
+        send("POST", "/rest/v1/umkm_workspaces?on_conflict=user_id",
+            GSON.toJson(row), session, "resolution=merge-duplicates,return=minimal");
+    }
+
+    private void requireSession(AuthSession session) throws IOException {
+        if (session == null || session.accessToken == null || session.userId == null) {
+            throw new IOException("Sesi Supabase tidak valid. Silakan masuk kembali.");
+        }
+    }
+
+    private String encodeQueryValue(String value) {
+        try {
+            return java.net.URLEncoder.encode(value, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException ex) {
+            throw new IllegalStateException("UTF-8 tidak tersedia.", ex);
+        }
     }
 
     private AuthSession sessionFrom(String response) throws IOException {
@@ -220,48 +308,6 @@ public class SupabaseClient {
             }
             connection.setRequestProperty("Accept", "application/json");
             if (prefer != null) connection.setRequestProperty("Prefer", prefer);
-            if (body != null) {
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-                connection.setFixedLengthStreamingMode(bytes.length);
-                try (OutputStream output = connection.getOutputStream()) {
-                    output.write(bytes);
-                }
-            }
-            int status = connection.getResponseCode();
-            InputStream stream = status >= 200 && status < 300
-                ? connection.getInputStream() : connection.getErrorStream();
-            String response = stream == null ? "" : read(stream);
-            if (status < 200 || status >= 300) {
-                throw new IOException(errorMessage(response, status));
-            }
-            return response;
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    private String sendApi(String method, String path, String body, AuthSession session)
-            throws IOException {
-        refreshIfNeeded(session);
-        URL endpoint = new URL(apiUrl + path);
-        String protocol = endpoint.getProtocol();
-        String host = endpoint.getHost();
-        boolean localHttp = "http".equalsIgnoreCase(protocol)
-            && ("127.0.0.1".equalsIgnoreCase(host) || "localhost".equalsIgnoreCase(host)
-                || "[::1]".equalsIgnoreCase(host));
-        if (!"https".equalsIgnoreCase(protocol) && !localHttp) {
-            throw new IOException("WARUNGAJU_API_URL harus menggunakan HTTPS "
-                + "(HTTP hanya diizinkan untuk backend lokal).");
-        }
-        HttpURLConnection connection = (HttpURLConnection) endpoint.openConnection();
-        try {
-            connection.setRequestMethod(method);
-            connection.setConnectTimeout(DEFAULT_TIMEOUT_MS);
-            connection.setReadTimeout(DEFAULT_TIMEOUT_MS);
-            connection.setRequestProperty("Authorization", "Bearer " + session.accessToken);
-            connection.setRequestProperty("Accept", "application/json");
             if (body != null) {
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");

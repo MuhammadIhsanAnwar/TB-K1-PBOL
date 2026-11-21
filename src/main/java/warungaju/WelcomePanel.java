@@ -11,7 +11,7 @@ public class WelcomePanel extends JPanel {
     public WelcomePanel(final MainFrame frame, Runnable themeToggle) {
         setLayout(new BorderLayout());
         setBackground(UI.BG_DARK);
-        add(glowStrip(), BorderLayout.WEST);
+        add(brandStrip(), BorderLayout.WEST);
 
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 22, 14));
         topBar.setOpaque(false);
@@ -24,7 +24,7 @@ public class WelcomePanel extends JPanel {
         g.insets = new Insets(8, 20, 8, 20);
         g.anchor = GridBagConstraints.WEST;
 
-        JLabel eyebrow = new JLabel("UMKM FINANCIAL INTELLIGENCE");
+        JLabel eyebrow = new JLabel("KEUANGAN USAHA / UMKM");
         eyebrow.setForeground(UI.PURPLE_TEXT);
         eyebrow.setFont(new Font(UI.FONT, Font.BOLD, 13));
         g.gridx = 0; g.gridy = 0; center.add(eyebrow, g);
@@ -42,10 +42,10 @@ public class WelcomePanel extends JPanel {
         features.setOpaque(false);
         features.add(feature("01", "Rencanakan", "Susun target usaha dengan data yang mudah dipahami."));
         features.add(feature("02", "Simulasikan", "Uji skenario bisnis sebelum mengambil keputusan."));
-        features.add(feature("03", "Pantau", "Lihat arus kas dan laporan dalam satu dashboard."));
+        features.add(feature("03", "Pantau", "Tinjau perubahan kas dan laporan secara berkala."));
         g.gridy = 3; g.fill = GridBagConstraints.HORIZONTAL; g.weightx = 1; center.add(features, g);
 
-        dashboard = UI.button("Halaman Dashboard");
+        dashboard = UI.button("Buka ringkasan usaha");
         dashboard.setFont(new Font(UI.FONT, Font.BOLD, 15));
         dashboard.setPreferredSize(new Dimension(240, 52));
         g.gridy = 4; g.fill = GridBagConstraints.NONE; g.anchor = GridBagConstraints.WEST; g.insets = new Insets(35, 20, 8, 20); center.add(dashboard, g);
@@ -58,7 +58,7 @@ public class WelcomePanel extends JPanel {
         add(statusPanel(), BorderLayout.SOUTH);
     }
 
-    private JPanel glowStrip() {
+    private JPanel brandStrip() {
         JPanel strip = new JPanel(new GridBagLayout());
         strip.setPreferredSize(new Dimension(110, 0));
         strip.setBackground(UI.BG_DARK);
